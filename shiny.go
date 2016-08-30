@@ -18,7 +18,6 @@ import (
 	"github.com/aarzilli/nucular/command"
 	"github.com/aarzilli/nucular/internal/assets"
 	"github.com/aarzilli/nucular/rect"
-	nstyle "github.com/aarzilli/nucular/style"
 
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/raster"
@@ -320,8 +319,7 @@ func (w *MasterWindow) updateLocked() {
 		}
 
 		if win.flags&windowPopup != 0 {
-			win.widgets.Add(nstyle.WidgetStateInactive, nk_null_rect, &drawableScissor{nk_null_rect})
-			win.widgets.Clip = nk_null_rect
+			win.cmds.PushScissor(nk_null_rect)
 
 			if !panelBegin(w.ctx, win, win.title) {
 				win.close = true
