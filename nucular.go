@@ -1631,7 +1631,7 @@ const (
 	horizontal
 )
 
-func scrollbarBehavior(state *nstyle.WidgetStates, in *Input, scroll, cursor, scrollwheel_bounds rect.Rect, scroll_offset float64, target float64, scroll_step float64, o orientation) float64 {
+func scrollbarBehavior(state *nstyle.WidgetStates, in *Input, scroll, cursor, scrollwheel_bounds, empty0, empty1 rect.Rect, scroll_offset float64, target float64, scroll_step float64, o orientation) float64 {
 	exitstate := basicWidgetStateControl(state, in, cursor)
 
 	if *state == nstyle.WidgetStateActive {
@@ -1667,6 +1667,31 @@ func scrollbarBehavior(state *nstyle.WidgetStates, in *Input, scroll, cursor, sc
 			in.Mouse.ScrollDelta = int(math.Ceil(residual))
 		} else {
 			in.Mouse.ScrollDelta = int(math.Floor(residual))
+		}
+	} else if in.Mouse.IsClickInRect(mouse.ButtonLeft, empty0) {
+		switch o {
+		case vertical:
+			scroll_offset -= float64(scroll.H)
+		case horizontal:
+			scroll_offset -= float64(scroll.W)
+		}
+
+		if scroll_offset < 0 {
+			scroll_offset = 0
+		}
+	} else if in.Mouse.IsClickInRect(mouse.ButtonLeft, empty1) {
+		var max float64
+		switch o {
+		case vertical:
+			scroll_offset += float64(scroll.H)
+			max = target - float64(scroll.H)
+		case horizontal:
+			scroll_offset += float64(scroll.W)
+			max = target - float64(scroll.W)
+		}
+
+		if scroll_offset > max {
+			scroll_offset = max
 		}
 	}
 
@@ -1729,15 +1754,21 @@ func doScrollbarv(win *Window, scroll, scrollwheel_bounds rect.Rect, offset floa
 
 	/* calculate scrollbar cursor bounds */
 	cursor.H = int(scroll_ratio*float64(scroll.H) - 2)
-
 	cursor.Y = scroll.Y + int(scroll_off*float64(scroll.H)) + 1
 	cursor.W = scroll.W - 2
 	cursor.X = scroll.X + 1
 
+	emptyNorth := scroll
+	emptyNorth.H = cursor.Y - scroll.Y
+
+	emptySouth := scroll
+	emptySouth.Y = cursor.Y + cursor.H
+	emptySouth.H = (scroll.Y + scroll.H) - emptySouth.Y
+
 	/* update scrollbar */
 	out := &win.widgets
 	state := out.PrevState(scroll)
-	scroll_offset = scrollbarBehavior(&state, in, scroll, cursor, scrollwheel_bounds, scroll_offset, target, scroll_step, vertical)
+	scroll_offset = scrollbarBehavior(&state, in, scroll, cursor, scrollwheel_bounds, emptyNorth, emptySouth, scroll_offset, target, scroll_step, vertical)
 
 	scroll_off = scroll_offset / target
 	cursor.Y = scroll.Y + int(scroll_off*float64(scroll.H))
@@ -1810,10 +1841,17 @@ func doScrollbarh(win *Window, scroll rect.Rect, offset float64, target float64,
 	cursor.H = scroll.H - 2
 	cursor.Y = scroll.Y + 1
 
+	emptyWest := scroll
+	emptyWest.W = cursor.X - scroll.X
+
+	emptyEast := scroll
+	emptyEast.X = cursor.X + cursor.W
+	emptyEast.W = (scroll.X + scroll.W) - emptyEast.X
+
 	/* update scrollbar */
 	out := &win.widgets
 	state := out.PrevState(scroll)
-	scroll_offset = scrollbarBehavior(&state, in, scroll, cursor, rect.Rect{0, 0, 0, 0}, scroll_offset, target, scroll_step, horizontal)
+	scroll_offset = scrollbarBehavior(&state, in, scroll, cursor, rect.Rect{0, 0, 0, 0}, emptyWest, emptyEast, scroll_offset, target, scroll_step, horizontal)
 
 	scroll_off = scroll_offset / target
 	cursor.X = scroll.X + int(scroll_off*float64(scroll.W))
