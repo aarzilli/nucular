@@ -861,6 +861,9 @@ func (w *MasterWindow) drawChanged(cmds []command.Command) bool {
 			}
 
 		case *command.RectFilled:
+			if i == 0 {
+				cmd.Color.A = 0xff
+			}
 			pcmd, ok := w.prevCmds[i].(*command.RectFilled)
 			if !ok {
 				return true
