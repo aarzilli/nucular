@@ -156,44 +156,35 @@ func createTreeNode(initialState bool, parent *treeNode) *treeNode {
 func createWindow(ctx *context, title string) *Window {
 	rootNode := createTreeNode(false, nil)
 	r := &Window{ctx: ctx, title: title, rootNode: rootNode, curNode: rootNode, groupWnd: map[string]*Window{}, first: true}
+	r.widgets.cur = make(map[rect.Rect]frozenWidget)
 	return r
 }
 
 type frozenWidget struct {
-	ws     nstyle.WidgetStates
-	bounds rect.Rect
+	ws         nstyle.WidgetStates
+	frameCount int
 }
 
 type widgetBuffer struct {
-	cur     []frozenWidget
-	prev    []frozenWidget
-	lastIdx int
+	cur        map[rect.Rect]frozenWidget
+	frameCount int
 }
 
 func (wbuf *widgetBuffer) PrevState(bounds rect.Rect) nstyle.WidgetStates {
-	start := wbuf.lastIdx
-	for i := 0; i < len(wbuf.prev); i++ {
-		k := (i + start) % len(wbuf.prev)
-		if wbuf.prev[k].bounds == bounds {
-			wbuf.lastIdx = k
-			return wbuf.prev[k].ws
-		}
-	}
-	return nstyle.WidgetStateInactive
+	return wbuf.cur[bounds].ws
 }
 
 func (wbuf *widgetBuffer) Add(ws nstyle.WidgetStates, bounds rect.Rect) {
-	wbuf.cur = append(wbuf.cur, frozenWidget{ws, bounds})
+	wbuf.cur[bounds] = frozenWidget{ws, wbuf.frameCount}
 }
 
 func (wbuf *widgetBuffer) reset() {
-	if cap(wbuf.prev) < len(wbuf.cur) {
-		wbuf.prev = make([]frozenWidget, cap(wbuf.cur))
+	for k, v := range wbuf.cur {
+		if v.frameCount != wbuf.frameCount {
+			delete(wbuf.cur, k)
+		}
 	}
-	wbuf.prev = wbuf.prev[:len(wbuf.cur)]
-	copy(wbuf.prev, wbuf.cur)
-	wbuf.cur = wbuf.cur[:0]
-	wbuf.lastIdx = 0
+	wbuf.frameCount++
 }
 
 func contextBegin(ctx *context, layout *panel) {
@@ -685,7 +676,6 @@ func panelEnd(ctx *context, window *Window) {
 		if layout.Flags&windowHidden != 0 {
 			/* window is hidden so clear command buffer  */
 			window.widgets.reset()
-			window.widgets.prev = []frozenWidget{}
 		}
 	}
 
@@ -2653,8 +2643,6 @@ func (win *Window) GroupBegin(title string, flags WindowFlags) *Window {
 func (win *Window) GroupEnd() {
 	panelEnd(win.ctx, win)
 	win.parent.usingSub = false
-	win.parent.widgets.prev = append(win.parent.widgets.prev, win.widgets.prev...)
-	win.parent.widgets.cur = append(win.parent.widgets.cur, win.widgets.cur...)
 
 	// immediate drawing
 	win.parent.cmds.Commands = append(win.parent.cmds.Commands, win.cmds.Commands...)
