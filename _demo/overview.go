@@ -185,7 +185,8 @@ func newOverviewDemo() (od *overviewDemo) {
 	return od
 }
 
-func (od *overviewDemo) overviewDemo(mw *nucular.MasterWindow, w *nucular.Window) {
+func (od *overviewDemo) overviewDemo(w *nucular.Window) {
+	mw := w.Master()
 	if in := w.Input(); in != nil {
 		k := in.Keyboard
 		for _, e := range k.Keys {
@@ -205,7 +206,7 @@ func (od *overviewDemo) overviewDemo(mw *nucular.MasterWindow, w *nucular.Window
 	style.NormalWindow.Header.Align = od.HeaderAlign
 
 	if od.ShowMenu {
-		od.overviewMenubar(mw, w)
+		od.overviewMenubar(w)
 	}
 
 	if w.TreePush(nucular.TreeTab, "Window", false) {
@@ -283,7 +284,7 @@ func (od *overviewDemo) overviewDemo(mw *nucular.MasterWindow, w *nucular.Window
 	}
 
 	if w.TreePush(nucular.TreeTab, "Popup", false) {
-		od.overviewPopup(mw, w)
+		od.overviewPopup(w)
 		w.TreePop()
 	}
 
@@ -312,20 +313,20 @@ func (od *overviewDemo) overviewDemo(mw *nucular.MasterWindow, w *nucular.Window
 	}
 }
 
-func (od *overviewDemo) menuMenu(mw *nucular.MasterWindow, w *nucular.Window) {
+func (od *overviewDemo) menuMenu(w *nucular.Window) {
 	w.Row(25).Dynamic(1)
 	if w.MenuItem(label.TA("Hide", "LC")) {
 		od.ShowMenu = false
 	}
 	if w.MenuItem(label.TA("About", "LC")) {
-		od.showAppAbout(mw)
+		od.showAppAbout(w.Master())
 	}
 	w.Progress(&od.Prog, 100, true)
 	w.SliderInt(0, &od.Slider, 16, 1)
 	w.CheckboxText("check", &od.Check)
 }
 
-func (od *overviewDemo) themeMenu(mw *nucular.MasterWindow, w *nucular.Window) {
+func (od *overviewDemo) themeMenu(w *nucular.Window) {
 	w.Row(25).Dynamic(1)
 	newtheme := od.Theme
 	if w.OptionText("Default Theme", newtheme == nstyle.DefaultTheme) {
@@ -342,13 +343,13 @@ func (od *overviewDemo) themeMenu(mw *nucular.MasterWindow, w *nucular.Window) {
 	}
 	if newtheme != od.Theme {
 		od.Theme = newtheme
-		_, scaling := mw.Style()
-		mw.SetStyle(nstyle.FromTheme(od.Theme), nil, scaling)
+		_, scaling := w.Master().Style()
+		w.Master().SetStyle(nstyle.FromTheme(od.Theme), nil, scaling)
 		w.Close()
 	}
 }
 
-func (od *overviewDemo) overviewMenubar(mw *nucular.MasterWindow, w *nucular.Window) {
+func (od *overviewDemo) overviewMenubar(w *nucular.Window) {
 	w.MenubarBegin()
 	w.Row(25).Static(45, 45, 70, 70, 70)
 	w.Menu(label.TA("MENU", "CC"), 120, od.menuMenu)
@@ -452,7 +453,7 @@ func (od *overviewDemo) overviewSelectableWidgets(w *nucular.Window) {
 	}
 }
 
-func (od *overviewDemo) comboColorSliders(mw *nucular.MasterWindow, w *nucular.Window) {
+func (od *overviewDemo) comboColorSliders(w *nucular.Window) {
 	w.Row(30).Ratio(0.15, 0.85)
 
 	slider := func(lbl string, b *uint8) {
@@ -467,7 +468,7 @@ func (od *overviewDemo) comboColorSliders(mw *nucular.MasterWindow, w *nucular.W
 	slider("B:", &od.ComboColor.B)
 }
 
-func (od *overviewDemo) comboSumProgress(mw *nucular.MasterWindow, w *nucular.Window) {
+func (od *overviewDemo) comboSumProgress(w *nucular.Window) {
 	w.Row(30).Dynamic(1)
 	w.Progress(&od.ProgA, 100, true)
 	w.Progress(&od.ProgB, 100, true)
@@ -475,7 +476,7 @@ func (od *overviewDemo) comboSumProgress(mw *nucular.MasterWindow, w *nucular.Wi
 	w.Progress(&od.ProgD, 100, true)
 }
 
-func (od *overviewDemo) comboSumCheckboxes(mw *nucular.MasterWindow, w *nucular.Window) {
+func (od *overviewDemo) comboSumCheckboxes(w *nucular.Window) {
 	w.Row(30).Dynamic(1)
 	w.CheckboxText(od.Weapons[0], &od.CheckValues[0])
 	w.CheckboxText(od.Weapons[1], &od.CheckValues[1])
@@ -484,14 +485,14 @@ func (od *overviewDemo) comboSumCheckboxes(mw *nucular.MasterWindow, w *nucular.
 
 }
 
-func (od *overviewDemo) comboFloats(mw *nucular.MasterWindow, w *nucular.Window) {
+func (od *overviewDemo) comboFloats(w *nucular.Window) {
 	w.Row(25).Dynamic(1)
 	w.PropertyFloat("#X:", -1024.0, &od.Position[0], 1024.0, 1, 0.5, 2)
 	w.PropertyFloat("#Y:", -1024.0, &od.Position[1], 1024.0, 1, 0.5, 2)
 	w.PropertyFloat("#X:", -1024.0, &od.Position[2], 1024.0, 1, 0.5, 2)
 }
 
-func (od *overviewDemo) comboTime(mw *nucular.MasterWindow, w *nucular.Window) {
+func (od *overviewDemo) comboTime(w *nucular.Window) {
 	var selt time.Time
 	if od.TimeSelected == 0 {
 		selt = time.Now()
@@ -544,13 +545,13 @@ func (od *overviewDemo) overviewComboWidgets(w *nucular.Window) {
 	w.Combo(label.T(fmt.Sprintf("%02d:%02d:%02d", selt.Hour(), selt.Minute(), selt.Second())), 250, od.comboTime)
 }
 
-func (od *overviewDemo) rightClickMenu(mw *nucular.MasterWindow, w *nucular.Window) {
+func (od *overviewDemo) rightClickMenu(w *nucular.Window) {
 	w.Row(25).Dynamic(1)
 	w.CheckboxText("Menu", &od.ShowMenu)
 	w.Progress(&od.PProg, 100, true)
 	w.SliderInt(0, &od.Slider, 16, 1)
 	if w.MenuItem(label.TA("About", "CC")) {
-		od.showAppAbout(mw)
+		od.showAppAbout(w.Master())
 	}
 	sel := func(i int) string {
 		if od.PSelect[i] {
@@ -564,7 +565,7 @@ func (od *overviewDemo) rightClickMenu(mw *nucular.MasterWindow, w *nucular.Wind
 	w.SelectableLabel(sel(3), "LC", &od.PSelect[3])
 }
 
-func (od *overviewDemo) errorPopup(mw *nucular.MasterWindow, w *nucular.Window) {
+func (od *overviewDemo) errorPopup(w *nucular.Window) {
 	w.Row(25).Dynamic(1)
 	w.Label("A terrible error has occured", "LC")
 	w.Row(25).Dynamic(2)
@@ -576,7 +577,7 @@ func (od *overviewDemo) errorPopup(mw *nucular.MasterWindow, w *nucular.Window) 
 	}
 }
 
-func (od *overviewDemo) overviewPopup(mw *nucular.MasterWindow, w *nucular.Window) {
+func (od *overviewDemo) overviewPopup(w *nucular.Window) {
 	// Menu contextual
 	w.Row(30).Static(180)
 	bounds := w.WidgetBounds()
@@ -587,7 +588,7 @@ func (od *overviewDemo) overviewPopup(mw *nucular.MasterWindow, w *nucular.Windo
 	w.Row(30).Static(100, 50)
 	w.Label("Popup:", "LC")
 	if w.Button(label.T("popup"), false) {
-		mw.PopupOpen("Error", nucular.WindowMovable|nucular.WindowTitle|nucular.WindowDynamic|nucular.WindowNoScrollbar, rect.Rect{20, 100, 230, 150}, true, od.errorPopup)
+		w.Master().PopupOpen("Error", nucular.WindowMovable|nucular.WindowTitle|nucular.WindowDynamic|nucular.WindowNoScrollbar, rect.Rect{20, 100, 230, 150}, true, od.errorPopup)
 	}
 
 	// Tooltip
@@ -994,7 +995,7 @@ func (od *overviewDemo) drawCustomWidget(bounds rect.Rect, style *nstyle.Style, 
 	out.StrokeLine(bounds.Min().Add(image.Point{50, 50}), bounds.Max().Add(image.Point{-50, -50}), 5, clr)
 }
 
-func (od *overviewDemo) aboutPopup(mw *nucular.MasterWindow, w *nucular.Window) {
+func (od *overviewDemo) aboutPopup(w *nucular.Window) {
 	w.Row(20).Dynamic(1)
 	w.Label("Nucular", "LC")
 	w.Label("By Alessandro Arzilli", "LC")

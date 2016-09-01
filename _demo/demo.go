@@ -59,7 +59,7 @@ func main() {
 	wnd.Main()
 }
 
-func buttonDemo(mw *nucular.MasterWindow, w *nucular.Window) {
+func buttonDemo(w *nucular.Window) {
 	w.Row(20).Static(60, 60)
 	if w.Button(label.T("button1"), false) {
 		fmt.Printf("button pressed!\n")
@@ -79,7 +79,7 @@ const (
 var op difficulty = easy
 var compression int
 
-func basicDemo(mw *nucular.MasterWindow, w *nucular.Window) {
+func basicDemo(w *nucular.Window) {
 	w.Row(30).Dynamic(1)
 	w.Label(time.Now().Format("15:04:05"), "RT")
 
@@ -100,13 +100,13 @@ func basicDemo(mw *nucular.MasterWindow, w *nucular.Window) {
 
 var textEditorEditor nucular.TextEditor
 
-func textEditorDemo(mw *nucular.MasterWindow, w *nucular.Window) {
+func textEditorDemo(w *nucular.Window) {
 	w.Row(30).Dynamic(1)
 	textEditorEditor.Maxlen = 30
 	textEditorEditor.Edit(w)
 }
 
-func horizontalSplit(mw *nucular.MasterWindow, w *nucular.Window) {
+func horizontalSplit(w *nucular.Window) {
 	h := w.LayoutAvailableHeight()
 	w.RowScaled(h).Dynamic(2)
 	if sw := w.GroupBegin("Left", nucular.WindowNoHScrollbar|nucular.WindowBorder); sw != nil {
@@ -125,7 +125,7 @@ func horizontalSplit(mw *nucular.MasterWindow, w *nucular.Window) {
 	}
 }
 
-func widgetBoundsBug(mw *nucular.MasterWindow, w *nucular.Window) {
+func widgetBoundsBug(w *nucular.Window) {
 	w.Row(20).StaticScaled(200, 250)
 	w.Label("first", "LC")
 	w.Label("second", "LC")
@@ -139,7 +139,7 @@ func widgetBoundsBug(mw *nucular.MasterWindow, w *nucular.Window) {
 
 var multilineTextEditor nucular.TextEditor
 
-func multilineTextEditorDemo(mw *nucular.MasterWindow, w *nucular.Window) {
+func multilineTextEditorDemo(w *nucular.Window) {
 	w.Row(0).Dynamic(1)
 	multilineTextEditor.Flags = nucular.EditMultiline | nucular.EditSelectable | nucular.EditClipboard
 	multilineTextEditor.Edit(w)
