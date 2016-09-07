@@ -192,11 +192,11 @@ func (od *overviewDemo) overviewDemo(w *nucular.Window) {
 		for _, e := range k.Keys {
 			_, scaling := mw.Style()
 			switch {
-			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Rune == '+') || (e.Rune == '='):
+			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Code == key.CodeEqualSign):
 				mw.SetStyle(nstyle.FromTheme(od.Theme), nil, scaling+0.1)
-			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Rune == '-'):
+			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Code == key.CodeHyphenMinus):
 				mw.SetStyle(nstyle.FromTheme(od.Theme), nil, scaling-0.1)
-			case (e.Modifiers == key.ModControl) && (e.Rune == 'f'):
+			case (e.Modifiers == key.ModControl) && (e.Code == key.CodeF):
 				mw.Perf = !mw.Perf
 			}
 		}
