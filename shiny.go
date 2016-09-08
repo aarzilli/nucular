@@ -296,6 +296,7 @@ func (mw *MasterWindow) Changed() {
 func (w *MasterWindow) updateLocked() {
 	contextBegin(w.ctx, &w.layout)
 	in := &w.ctx.Input
+	in.Mouse.clip = nk_null_rect
 	in.Keyboard.Text = w.textbuffer.String()
 	w.ctx.Windows[0].Bounds = rect.FromRectangle(w.bounds)
 	var t0, t1, te time.Time
