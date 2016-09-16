@@ -788,10 +788,13 @@ func panelLayout(ctx *context, win *Window, height int, cols int) {
 
 	style := win.style()
 	item_spacing := style.Spacing
-	//panel_padding := style.Padding
 
 	if height == 0 {
-		height = win.LayoutAvailableHeight() - layout.ReservedHeight - item_spacing.Y
+		height = layout.Clip.H - (layout.AtY - layout.Bounds.Y)
+		height -= layout.Row.Height
+		if layout.ReservedHeight > 0 {
+			height -= layout.ReservedHeight + item_spacing.Y
+		}
 	}
 
 	/* update the current row and set the current row layout */
@@ -1172,12 +1175,7 @@ func (win *Window) WidgetBounds() rect.Rect {
 
 // Returns remaining available height of win in scaled units.
 func (win *Window) LayoutAvailableHeight() int {
-	switch win.layout.Row.Type {
-	case layoutDynamicFree, layoutStaticFree:
-		return win.layout.Clip.H
-	default:
-		return win.layout.Clip.H - (win.layout.AtY - win.layout.Bounds.Y) - win.style().Spacing.Y - win.layout.Row.Height
-	}
+	return win.layout.Clip.H - (win.layout.AtY - win.layout.Bounds.Y) - win.style().Spacing.Y - win.layout.Row.Height
 }
 
 func (win *Window) LayoutAvailableWidth() int {

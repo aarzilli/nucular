@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"io/ioutil"
 	"time"
 
@@ -54,6 +55,10 @@ func main() {
 		bs, _ := ioutil.ReadFile("overview.go")
 		multilineTextEditor.Buffer = []rune(string(bs))
 		wnd = nucular.NewMasterWindow(multilineTextEditorDemo, nucular.WindowNoScrollbar)
+	case 8:
+		pd := &panelDebug{}
+		pd.Init()
+		wnd = nucular.NewMasterWindow(pd.Update, nucular.WindowNoScrollbar)
 	}
 	wnd.SetStyle(nstyle.FromTheme(theme), nil, scaling)
 	wnd.Main()
@@ -107,8 +112,7 @@ func textEditorDemo(w *nucular.Window) {
 }
 
 func horizontalSplit(w *nucular.Window) {
-	h := w.LayoutAvailableHeight()
-	w.RowScaled(h).Dynamic(2)
+	w.Row(0).Dynamic(2)
 	if sw := w.GroupBegin("Left", nucular.WindowNoHScrollbar|nucular.WindowBorder); sw != nil {
 		sw.Row(18).Static(150)
 		for i := 0; i < 64; i++ {
@@ -143,4 +147,79 @@ func multilineTextEditorDemo(w *nucular.Window) {
 	w.Row(0).Dynamic(1)
 	multilineTextEditor.Flags = nucular.EditMultiline | nucular.EditSelectable | nucular.EditClipboard
 	multilineTextEditor.Edit(w)
+}
+
+type panelDebug struct {
+	splitv          nucular.ScalableSplit
+	splith          nucular.ScalableSplit
+	showblocks      bool
+	showsingleblock bool
+	showtabs        bool
+}
+
+func (pd *panelDebug) Init() {
+	pd.splitv.MinSize = 80
+	pd.splitv.Size = 120
+	pd.splitv.Spacing = 5
+	pd.splith.MinSize = 100
+	pd.splith.Size = 300
+	pd.splith.Spacing = 5
+	pd.showtabs = true
+	pd.showsingleblock = true
+}
+
+func (pd *panelDebug) Update(w *nucular.Window) {
+	for _, k := range w.Input().Keyboard.Keys {
+		if k.Rune == 'b' {
+			pd.showsingleblock = false
+			pd.showblocks = !pd.showblocks
+		}
+		if k.Rune == 'B' {
+			pd.showsingleblock = !pd.showsingleblock
+		}
+		if k.Rune == 't' {
+			pd.showtabs = !pd.showtabs
+		}
+	}
+
+	if pd.showtabs {
+		w.Row(20).Dynamic(2)
+		w.Label("A", "LC")
+		w.Label("B", "LC")
+	}
+
+	area := w.Row(0).SpaceBegin(0)
+
+	if pd.showsingleblock {
+		w.LayoutSpacePushScaled(area)
+		bounds, out := w.Custom(nstyle.WidgetStateInactive)
+		if out != nil {
+			out.FillRect(bounds, 10, color.RGBA{0x00, 0x00, 0xff, 0xff})
+		}
+	} else {
+		leftbounds, rightbounds := pd.splitv.Vertical(w, area)
+		viewbounds, commitbounds := pd.splith.Horizontal(w, rightbounds)
+
+		w.LayoutSpacePushScaled(leftbounds)
+		pd.groupOrBlock(w, "index-files", nucular.WindowBorder)
+
+		w.LayoutSpacePushScaled(viewbounds)
+		pd.groupOrBlock(w, "index-diff", nucular.WindowBorder)
+
+		w.LayoutSpacePushScaled(commitbounds)
+		pd.groupOrBlock(w, "index-right-column", nucular.WindowNoScrollbar|nucular.WindowBorder)
+	}
+}
+
+func (pd *panelDebug) groupOrBlock(w *nucular.Window, name string, flags nucular.WindowFlags) {
+	if pd.showblocks {
+		bounds, out := w.Custom(nstyle.WidgetStateInactive)
+		if out != nil {
+			out.FillRect(bounds, 10, color.RGBA{0x00, 0x00, 0xff, 0xff})
+		}
+	} else {
+		if sw := w.GroupBegin(name, flags); sw != nil {
+			sw.GroupEnd()
+		}
+	}
 }
