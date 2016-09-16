@@ -1054,7 +1054,7 @@ func (ctr *RowConstructor) StaticScaled(width ...int) {
 // Starts new row that will contain widget_count widgets.
 // The size and position of widgets inside this row will be specified
 // by callling LayoutSpacePush/LayoutSpacePushScaled.
-func (ctr *RowConstructor) SpaceBegin(widget_count int) {
+func (ctr *RowConstructor) SpaceBegin(widget_count int) (bounds rect.Rect) {
 	layout := ctr.win.layout
 	panelLayout(ctr.win.ctx, ctr.win, ctr.height, widget_count)
 	layout.Row.Type = layoutStaticFree
@@ -1070,6 +1070,15 @@ func (ctr *RowConstructor) SpaceBegin(widget_count int) {
 	if layout.AtY < layout.Clip.Y {
 		layout.AtY = layout.Clip.Y
 	}
+
+	style := ctr.win.style()
+	spacing := style.Spacing
+	padding := style.Padding
+
+	bounds.W = layout.Width - 2*padding.X
+	bounds.H = layout.Row.Height - spacing.Y
+
+	return bounds
 }
 
 // Starts new row that will contain widget_count widgets.
