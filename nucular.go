@@ -873,14 +873,22 @@ func layoutWidgetSpace(bounds *rect.Rect, ctx *context, win *Window, modify bool
 		}
 	case layoutStaticFree:
 		/* free widget placing */
-		bounds.X = layout.AtX + layout.Row.Item.X
+		atx, aty := layout.AtX, layout.AtY
+		if atx < layout.Clip.X {
+			atx = layout.Clip.X
+		}
+		if aty < layout.Clip.Y {
+			aty = layout.Clip.Y
+		}
+
+		bounds.X = atx + layout.Row.Item.X
 
 		bounds.W = layout.Row.Item.W
 		if ((bounds.X + bounds.W) > layout.MaxX) && modify {
 			layout.MaxX = (bounds.X + bounds.W)
 		}
 		bounds.X -= layout.Offset.X
-		bounds.Y = layout.AtY + layout.Row.Item.Y
+		bounds.Y = aty + layout.Row.Item.Y
 		bounds.Y -= layout.Offset.Y
 		bounds.H = layout.Row.Item.H
 		return
@@ -1030,7 +1038,7 @@ func (ctr *RowConstructor) StaticScaled(width ...int) {
 		padding := style.Padding
 		panel_padding := 2 * padding.X
 		panel_spacing := int(float64(len(width)-1) * float64(spacing.X))
-		panel_space := layout.Width - panel_padding - panel_spacing - layout.AtX
+		panel_space := layout.Width - panel_padding - panel_spacing
 
 		unused := panel_space - used
 
@@ -1064,12 +1072,6 @@ func (ctr *RowConstructor) SpaceBegin(widget_count int) (bounds rect.Rect) {
 	layout.Row.ItemRatio = 0.0
 	layout.Row.ItemOffset = 0
 	layout.Row.Filled = 0
-	if layout.AtX < layout.Clip.X {
-		layout.AtX = layout.Clip.X
-	}
-	if layout.AtY < layout.Clip.Y {
-		layout.AtY = layout.Clip.Y
-	}
 
 	style := ctr.win.style()
 	spacing := style.Spacing
