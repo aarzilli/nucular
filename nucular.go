@@ -1030,7 +1030,7 @@ func (ctr *RowConstructor) StaticScaled(width ...int) {
 		padding := style.Padding
 		panel_padding := 2 * padding.X
 		panel_spacing := int(float64(len(width)-1) * float64(spacing.X))
-		panel_space := layout.Width - panel_padding - panel_spacing
+		panel_space := layout.Width - panel_padding - panel_spacing - layout.AtX
 
 		unused := panel_space - used
 
