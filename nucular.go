@@ -305,8 +305,8 @@ func panelBegin(ctx *context, win *Window, title string) bool {
 		layout.HeaderH = window_padding.Y
 		layout.Row.Height = window_padding.Y
 	} else {
-		layout.HeaderH = item_spacing.Y + window_padding.Y
-		layout.Row.Height = item_spacing.Y + window_padding.Y
+		layout.HeaderH = window_padding.Y
+		layout.Row.Height = window_padding.Y
 	}
 
 	/* calculate window footer height */
