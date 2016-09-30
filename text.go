@@ -365,7 +365,7 @@ func (edit *TextEditor) indexToCoord(index int, font font.Face, row_height int) 
 		}
 		x += FontWidth(font, string(edit.Buffer[i:i+1]))
 	}
-	if index >= len(edit.Buffer) {
+	if index >= len(edit.Buffer) && len(edit.Buffer) > 0 && edit.Buffer[len(edit.Buffer)-1] == '\n' {
 		return image.Point{x, drawchunk.Y + drawchunk.H + drawchunk.H/2}
 	}
 	return image.Point{x, drawchunk.Y + drawchunk.H/2}
