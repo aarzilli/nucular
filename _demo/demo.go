@@ -11,7 +11,7 @@ import (
 	nstyle "github.com/aarzilli/nucular/style"
 )
 
-var whichdemo int = 7
+var whichdemo int = 4
 
 const scaling = 1.8
 
