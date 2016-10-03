@@ -2445,8 +2445,10 @@ func (win *Window) Close() {
 func (win *Window) ContextualOpen(flags WindowFlags, size image.Point, trigger_bounds rect.Rect, updateFn UpdateFn) {
 	size.X = win.ctx.scale(size.X)
 	size.Y = win.ctx.scale(size.Y)
-	if !win.Input().Mouse.Clicked(mouse.ButtonRight, trigger_bounds) {
-		return
+	if trigger_bounds.W > 0 && trigger_bounds.H > 0 {
+		if !win.Input().Mouse.Clicked(mouse.ButtonRight, trigger_bounds) {
+			return
+		}
 	}
 
 	var body rect.Rect
