@@ -735,11 +735,10 @@ func borderOptimize(cmd *command.Command, cmds []command.Command, idx int) (ok b
 		return false, 0
 	}
 
-	
 	if cmds[idx].Kind != command.RectFilledCmd {
 		return false, 0
 	}
-	
+
 	cmd2 := cmds[idx]
 
 	if cmd2.RectFilled.Color.A != 0xff {
@@ -878,10 +877,10 @@ func (w *MasterWindow) drawChanged(cmds []command.Command) bool {
 		if cmds[i].Kind != w.prevCmds[i].Kind {
 			return true
 		}
-		
+
 		cmd := &cmds[i]
 		pcmd := &w.prevCmds[i]
-		
+
 		switch cmds[i].Kind {
 		case command.ScissorCmd:
 			if *pcmd != *cmd {

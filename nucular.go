@@ -2528,25 +2528,10 @@ func (win *Window) Tooltip(text string) {
 ///////////////////////////////////////////////////////////////////////////////////
 
 func (ctx *context) comboOpen(height int, is_clicked bool, header rect.Rect, updateFn UpdateFn) {
-	height = ctx.scale(height)
-
-	if !is_clicked {
-		return
-	}
-
-	var body rect.Rect
-	body.X = header.X
-	body.W = header.W
-	body.Y = header.Y + header.H - 1
-	body.H = height
-
-	ctx.nonblockOpen(windowCombo, body, rect.Rect{0, 0, 0, 0}, updateFn)
 }
 
 // Adds a drop-down list to win.
 func (win *Window) Combo(lbl label.Label, height int, updateFn UpdateFn) {
-	var is_active bool = false
-
 	s, header := win.widget()
 	if !s {
 		return
@@ -2554,32 +2539,42 @@ func (win *Window) Combo(lbl label.Label, height int, updateFn UpdateFn) {
 
 	in := win.inputMaybe(s)
 	state := win.widgets.PrevState(header)
-	if buttonBehaviorDo(&state, header, in, false) {
-		is_active = true
-	}
+	is_clicked := buttonBehaviorDo(&state, header, in, false)
 
 	switch lbl.Kind {
 	case label.ColorLabel:
 		win.widgets.Add(state, header)
-		drawComboColor(win, state, header, is_active, lbl.Color)
+		drawComboColor(win, state, header, is_clicked, lbl.Color)
 	case label.ImageLabel:
 		win.widgets.Add(state, header)
-		drawComboImage(win, state, header, is_active, lbl.Img)
+		drawComboImage(win, state, header, is_clicked, lbl.Img)
 	case label.ImageTextLabel:
 		win.widgets.Add(state, header)
-		drawComboImageText(win, state, header, is_active, lbl.Text, lbl.Img)
+		drawComboImageText(win, state, header, is_clicked, lbl.Text, lbl.Img)
 	case label.SymbolLabel:
 		win.widgets.Add(state, header)
-		drawComboSymbol(win, state, header, is_active, lbl.Symbol)
+		drawComboSymbol(win, state, header, is_clicked, lbl.Symbol)
 	case label.SymbolTextLabel:
 		win.widgets.Add(state, header)
-		drawComboSymbolText(win, state, header, is_active, lbl.Symbol, lbl.Text)
+		drawComboSymbolText(win, state, header, is_clicked, lbl.Symbol, lbl.Text)
 	case label.TextLabel:
 		win.widgets.Add(state, header)
-		drawComboText(win, state, header, is_active, lbl.Text)
+		drawComboText(win, state, header, is_clicked, lbl.Text)
 	}
 
-	win.ctx.comboOpen(height, is_active, header, updateFn)
+	if !is_clicked {
+		return
+	}
+
+	height = win.ctx.scale(height)
+
+	var body rect.Rect
+	body.X = header.X
+	body.W = header.W
+	body.Y = header.Y + header.H - 1
+	body.H = height
+
+	win.ctx.nonblockOpen(windowCombo, body, rect.Rect{0, 0, 0, 0}, updateFn)
 }
 
 // Adds a drop-down list to win. The contents are specified by items,
@@ -2607,22 +2602,6 @@ func (win *Window) ComboSimple(items []string, selected *int, item_height int) {
 // MENU
 ///////////////////////////////////////////////////////////////////////////////////
 
-func (win *Window) menuOpen(is_clicked bool, header rect.Rect, width int, updateFn UpdateFn) {
-	width = win.ctx.scale(width)
-
-	if !is_clicked {
-		return
-	}
-
-	var body rect.Rect
-	body.X = header.X
-	body.W = width
-	body.Y = header.Y + header.H
-	body.H = (win.layout.Bounds.Y + win.layout.Bounds.H) - body.Y
-
-	win.ctx.nonblockOpen(windowMenu|WindowNoScrollbar, body, header, updateFn)
-}
-
 // Adds a menu to win with a text label.
 func (win *Window) Menu(lbl label.Label, width int, updateFn UpdateFn) {
 	state, header := win.widget()
@@ -2634,8 +2613,19 @@ func (win *Window) Menu(lbl label.Label, width int, updateFn UpdateFn) {
 		in = &win.ctx.Input
 		in.Mouse.clip = win.cmds.Clip
 	}
-	is_clicked := doButton(win, lbl, header, &win.ctx.Style.MenuButton, in, false)
-	win.menuOpen(is_clicked, header, width, updateFn)
+	if !doButton(win, lbl, header, &win.ctx.Style.MenuButton, in, false) {
+		return
+	}
+
+	width = win.ctx.scale(width)
+
+	var body rect.Rect
+	body.X = header.X
+	body.W = width
+	body.Y = header.Y + header.H
+	body.H = (win.layout.Bounds.Y + win.layout.Bounds.H) - body.Y
+
+	win.ctx.nonblockOpen(windowMenu|WindowNoScrollbar, body, header, updateFn)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
