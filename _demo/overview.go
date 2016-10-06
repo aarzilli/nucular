@@ -313,47 +313,43 @@ func (od *overviewDemo) overviewDemo(w *nucular.Window) {
 	}
 }
 
-func (od *overviewDemo) menuMenu(w *nucular.Window) {
-	w.Row(25).Dynamic(1)
-	if w.MenuItem(label.TA("Hide", "LC")) {
-		od.ShowMenu = false
-	}
-	if w.MenuItem(label.TA("About", "LC")) {
-		od.showAppAbout(w.Master())
-	}
-	w.Progress(&od.Prog, 100, true)
-	w.SliderInt(0, &od.Slider, 16, 1)
-	w.CheckboxText("check", &od.Check)
-}
-
-func (od *overviewDemo) themeMenu(w *nucular.Window) {
-	w.Row(25).Dynamic(1)
-	newtheme := od.Theme
-	if w.OptionText("Default Theme", newtheme == nstyle.DefaultTheme) {
-		newtheme = nstyle.DefaultTheme
-	}
-	if w.OptionText("White Theme", newtheme == nstyle.WhiteTheme) {
-		newtheme = nstyle.WhiteTheme
-	}
-	if w.OptionText("Red Theme", newtheme == nstyle.RedTheme) {
-		newtheme = nstyle.RedTheme
-	}
-	if w.OptionText("Dark Theme", newtheme == nstyle.DarkTheme) {
-		newtheme = nstyle.DarkTheme
-	}
-	if newtheme != od.Theme {
-		od.Theme = newtheme
-		_, scaling := w.Master().Style()
-		w.Master().SetStyle(nstyle.FromTheme(od.Theme), nil, scaling)
-		w.Close()
-	}
-}
-
 func (od *overviewDemo) overviewMenubar(w *nucular.Window) {
 	w.MenubarBegin()
 	w.Row(25).Static(45, 45, 70, 70, 70)
-	w.Menu(label.TA("MENU", "CC"), 120, od.menuMenu)
-	w.Menu(label.TA("THEME", "CC"), 180, od.themeMenu)
+	if w := w.Menu(label.TA("MENU", "CC"), 120, nil); w != nil {
+		w.Row(25).Dynamic(1)
+		if w.MenuItem(label.TA("Hide", "LC")) {
+			od.ShowMenu = false
+		}
+		if w.MenuItem(label.TA("About", "LC")) {
+			od.showAppAbout(w.Master())
+		}
+		w.Progress(&od.Prog, 100, true)
+		w.SliderInt(0, &od.Slider, 16, 1)
+		w.CheckboxText("check", &od.Check)
+	}
+	if w := w.Menu(label.TA("THEME", "CC"), 180, nil); w != nil {
+		w.Row(25).Dynamic(1)
+		newtheme := od.Theme
+		if w.OptionText("Default Theme", newtheme == nstyle.DefaultTheme) {
+			newtheme = nstyle.DefaultTheme
+		}
+		if w.OptionText("White Theme", newtheme == nstyle.WhiteTheme) {
+			newtheme = nstyle.WhiteTheme
+		}
+		if w.OptionText("Red Theme", newtheme == nstyle.RedTheme) {
+			newtheme = nstyle.RedTheme
+		}
+		if w.OptionText("Dark Theme", newtheme == nstyle.DarkTheme) {
+			newtheme = nstyle.DarkTheme
+		}
+		if newtheme != od.Theme {
+			od.Theme = newtheme
+			_, scaling := w.Master().Style()
+			w.Master().SetStyle(nstyle.FromTheme(od.Theme), nil, scaling)
+			w.Close()
+		}
+	}
 	w.Progress(&od.Mprog, 100, true)
 	w.SliderInt(0, &od.Mslider, 16, 1)
 	w.CheckboxText("check", &od.Mcheck)
@@ -453,62 +449,6 @@ func (od *overviewDemo) overviewSelectableWidgets(w *nucular.Window) {
 	}
 }
 
-func (od *overviewDemo) comboColorSliders(w *nucular.Window) {
-	w.Row(30).Ratio(0.15, 0.85)
-
-	slider := func(lbl string, b *uint8) {
-		w.Label(lbl, "LC")
-		i := int(*b)
-		w.SliderInt(0, &i, 255, 5)
-		*b = uint8(i)
-	}
-
-	slider("R:", &od.ComboColor.R)
-	slider("G:", &od.ComboColor.G)
-	slider("B:", &od.ComboColor.B)
-}
-
-func (od *overviewDemo) comboSumProgress(w *nucular.Window) {
-	w.Row(30).Dynamic(1)
-	w.Progress(&od.ProgA, 100, true)
-	w.Progress(&od.ProgB, 100, true)
-	w.Progress(&od.ProgC, 100, true)
-	w.Progress(&od.ProgD, 100, true)
-}
-
-func (od *overviewDemo) comboSumCheckboxes(w *nucular.Window) {
-	w.Row(30).Dynamic(1)
-	w.CheckboxText(od.Weapons[0], &od.CheckValues[0])
-	w.CheckboxText(od.Weapons[1], &od.CheckValues[1])
-	w.CheckboxText(od.Weapons[2], &od.CheckValues[2])
-	w.CheckboxText(od.Weapons[3], &od.CheckValues[3])
-
-}
-
-func (od *overviewDemo) comboFloats(w *nucular.Window) {
-	w.Row(25).Dynamic(1)
-	w.PropertyFloat("#X:", -1024.0, &od.Position[0], 1024.0, 1, 0.5, 2)
-	w.PropertyFloat("#Y:", -1024.0, &od.Position[1], 1024.0, 1, 0.5, 2)
-	w.PropertyFloat("#X:", -1024.0, &od.Position[2], 1024.0, 1, 0.5, 2)
-}
-
-func (od *overviewDemo) comboTime(w *nucular.Window) {
-	var selt time.Time
-	if od.TimeSelected == 0 {
-		selt = time.Now()
-	} else {
-		selt = time.Unix(int64(od.TimeSelected), 0)
-	}
-
-	w.Row(25).Dynamic(1)
-	var second, minute, hour int = selt.Second(), selt.Minute(), selt.Hour()
-	fmt.Printf("time selected: %v\n", selt)
-	w.PropertyInt("#S:", 0, &second, 60, 1, 1)
-	w.PropertyInt("#M:", 0, &minute, 60, 1, 1)
-	w.PropertyInt("#H:", 0, &hour, 60, 1, 1)
-	od.TimeSelected = int(time.Date(selt.Year(), selt.Month(), selt.Day(), hour, minute, second, 0, selt.Location()).Unix())
-}
-
 func (od *overviewDemo) overviewComboWidgets(w *nucular.Window) {
 	w.Row(25).Static(200)
 
@@ -516,11 +456,30 @@ func (od *overviewDemo) overviewComboWidgets(w *nucular.Window) {
 	w.ComboSimple(od.Weapons, &od.CurrentWeapon, 25)
 
 	// Slider color combobox
-	w.Combo(label.C(od.ComboColor), 200, od.comboColorSliders)
+	if w := w.Combo(label.C(od.ComboColor), 200, nil); w != nil {
+		w.Row(30).Ratio(0.15, 0.85)
+
+		slider := func(lbl string, b *uint8) {
+			w.Label(lbl, "LC")
+			i := int(*b)
+			w.SliderInt(0, &i, 255, 5)
+			*b = uint8(i)
+		}
+
+		slider("R:", &od.ComboColor.R)
+		slider("G:", &od.ComboColor.G)
+		slider("B:", &od.ComboColor.B)
+	}
 
 	// Progressbar combobox
 	sum := od.ProgA + od.ProgB + od.ProgC + od.ProgD
-	w.Combo(label.T(fmt.Sprintf("%d", sum)), 200, od.comboSumProgress)
+	if w := w.Combo(label.T(fmt.Sprintf("%d", sum)), 200, nil); w != nil {
+		w.Row(30).Dynamic(1)
+		w.Progress(&od.ProgA, 100, true)
+		w.Progress(&od.ProgB, 100, true)
+		w.Progress(&od.ProgC, 100, true)
+		w.Progress(&od.ProgD, 100, true)
+	}
 
 	// Checkbox combobox
 	sum = 0
@@ -529,10 +488,21 @@ func (od *overviewDemo) overviewComboWidgets(w *nucular.Window) {
 			sum++
 		}
 	}
-	w.Combo(label.T(fmt.Sprintf("%d", sum)), 200, od.comboSumCheckboxes)
+	if w := w.Combo(label.T(fmt.Sprintf("%d", sum)), 200, nil); w != nil {
+		w.Row(30).Dynamic(1)
+		w.CheckboxText(od.Weapons[0], &od.CheckValues[0])
+		w.CheckboxText(od.Weapons[1], &od.CheckValues[1])
+		w.CheckboxText(od.Weapons[2], &od.CheckValues[2])
+		w.CheckboxText(od.Weapons[3], &od.CheckValues[3])
+	}
 
 	// Complex text combobox
-	w.Combo(label.T(fmt.Sprintf("%.2f %.2f %.2f", od.Position[0], od.Position[1], od.Position[2])), 200, od.comboFloats)
+	if w := w.Combo(label.T(fmt.Sprintf("%.2f %.2f %.2f", od.Position[0], od.Position[1], od.Position[2])), 200, nil); w != nil {
+		w.Row(25).Dynamic(1)
+		w.PropertyFloat("#X:", -1024.0, &od.Position[0], 1024.0, 1, 0.5, 2)
+		w.PropertyFloat("#Y:", -1024.0, &od.Position[1], 1024.0, 1, 0.5, 2)
+		w.PropertyFloat("#X:", -1024.0, &od.Position[2], 1024.0, 1, 0.5, 2)
+	}
 
 	// Time combobox
 	var selt time.Time
@@ -542,27 +512,22 @@ func (od *overviewDemo) overviewComboWidgets(w *nucular.Window) {
 		selt = time.Unix(int64(od.TimeSelected), 0)
 	}
 
-	w.Combo(label.T(fmt.Sprintf("%02d:%02d:%02d", selt.Hour(), selt.Minute(), selt.Second())), 250, od.comboTime)
-}
-
-func (od *overviewDemo) rightClickMenu(w *nucular.Window) {
-	w.Row(25).Dynamic(1)
-	w.CheckboxText("Menu", &od.ShowMenu)
-	w.Progress(&od.PProg, 100, true)
-	w.SliderInt(0, &od.Slider, 16, 1)
-	if w.MenuItem(label.TA("About", "CC")) {
-		od.showAppAbout(w.Master())
-	}
-	sel := func(i int) string {
-		if od.PSelect[i] {
-			return "Unselect"
+	if w := w.Combo(label.T(fmt.Sprintf("%02d:%02d:%02d", selt.Hour(), selt.Minute(), selt.Second())), 250, nil); w != nil {
+		var selt time.Time
+		if od.TimeSelected == 0 {
+			selt = time.Now()
+		} else {
+			selt = time.Unix(int64(od.TimeSelected), 0)
 		}
-		return "Select"
+
+		w.Row(25).Dynamic(1)
+		var second, minute, hour int = selt.Second(), selt.Minute(), selt.Hour()
+		fmt.Printf("time selected: %v\n", selt)
+		w.PropertyInt("#S:", 0, &second, 60, 1, 1)
+		w.PropertyInt("#M:", 0, &minute, 60, 1, 1)
+		w.PropertyInt("#H:", 0, &hour, 60, 1, 1)
+		od.TimeSelected = int(time.Date(selt.Year(), selt.Month(), selt.Day(), hour, minute, second, 0, selt.Location()).Unix())
 	}
-	w.SelectableLabel(sel(0), "LC", &od.PSelect[0])
-	w.SelectableLabel(sel(1), "LC", &od.PSelect[1])
-	w.SelectableLabel(sel(2), "LC", &od.PSelect[2])
-	w.SelectableLabel(sel(3), "LC", &od.PSelect[3])
 }
 
 func (od *overviewDemo) errorPopup(w *nucular.Window) {
@@ -582,7 +547,25 @@ func (od *overviewDemo) overviewPopup(w *nucular.Window) {
 	w.Row(30).Static(180)
 	bounds := w.WidgetBounds()
 	w.Label("Right click me for menu", "LC")
-	w.ContextualOpen(0, image.Point{100, 300}, bounds, od.rightClickMenu)
+	if w := w.ContextualOpen(0, image.Point{100, 300}, bounds, nil); w != nil {
+		w.Row(25).Dynamic(1)
+		w.CheckboxText("Menu", &od.ShowMenu)
+		w.Progress(&od.PProg, 100, true)
+		w.SliderInt(0, &od.Slider, 16, 1)
+		if w.MenuItem(label.TA("About", "CC")) {
+			od.showAppAbout(w.Master())
+		}
+		sel := func(i int) string {
+			if od.PSelect[i] {
+				return "Unselect"
+			}
+			return "Select"
+		}
+		w.SelectableLabel(sel(0), "LC", &od.PSelect[0])
+		w.SelectableLabel(sel(1), "LC", &od.PSelect[1])
+		w.SelectableLabel(sel(2), "LC", &od.PSelect[2])
+		w.SelectableLabel(sel(3), "LC", &od.PSelect[3])
+	}
 
 	// Popup
 	w.Row(30).Static(100, 50)
