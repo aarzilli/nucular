@@ -453,7 +453,7 @@ func (od *overviewDemo) overviewComboWidgets(w *nucular.Window) {
 	w.Row(25).Static(200)
 
 	// Default combo box
-	w.ComboSimple(od.Weapons, &od.CurrentWeapon, 25)
+	od.CurrentWeapon = w.ComboSimple(od.Weapons, od.CurrentWeapon, 25)
 
 	// Slider color combobox
 	if w := w.Combo(label.C(od.ComboColor), 200, nil); w != nil {
