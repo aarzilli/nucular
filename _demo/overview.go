@@ -190,19 +190,19 @@ func (od *overviewDemo) overviewDemo(w *nucular.Window) {
 	if in := w.Input(); in != nil {
 		k := in.Keyboard
 		for _, e := range k.Keys {
-			_, scaling := mw.Style()
+			scaling := mw.Style().Scaling
 			switch {
 			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Code == key.CodeEqualSign):
-				mw.SetStyle(nstyle.FromTheme(od.Theme), nil, scaling+0.1)
+				mw.Style().Scale(scaling + 0.1)
 			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Code == key.CodeHyphenMinus):
-				mw.SetStyle(nstyle.FromTheme(od.Theme), nil, scaling-0.1)
+				mw.Style().Scale(scaling - 0.1)
 			case (e.Modifiers == key.ModControl) && (e.Code == key.CodeF):
 				mw.Perf = !mw.Perf
 			}
 		}
 	}
 
-	style, _ := mw.Style()
+	style := mw.Style()
 	style.NormalWindow.Header.Align = od.HeaderAlign
 
 	if od.ShowMenu {
@@ -305,7 +305,7 @@ func (od *overviewDemo) overviewDemo(w *nucular.Window) {
 		w.RowScaled(335).StaticScaled(500)
 		bounds, out := w.Custom(nstyle.WidgetStateInactive)
 		if out != nil {
-			style, _ := mw.Style()
+			style := mw.Style()
 			od.drawCustomWidget(bounds, style, out)
 		}
 
@@ -345,8 +345,7 @@ func (od *overviewDemo) overviewMenubar(w *nucular.Window) {
 		}
 		if newtheme != od.Theme {
 			od.Theme = newtheme
-			_, scaling := w.Master().Style()
-			w.Master().SetStyle(nstyle.FromTheme(od.Theme), nil, scaling)
+			w.Master().SetStyle(nstyle.FromTheme(od.Theme, w.Master().Style().Scaling))
 			w.Close()
 		}
 	}

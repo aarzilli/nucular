@@ -60,7 +60,7 @@ func main() {
 		pd.Init()
 		wnd = nucular.NewMasterWindow(pd.Update, nucular.WindowNoScrollbar)
 	}
-	wnd.SetStyle(nstyle.FromTheme(theme), nil, scaling)
+	wnd.SetStyle(nstyle.FromTheme(theme, scaling))
 	wnd.Main()
 }
 
