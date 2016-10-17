@@ -334,7 +334,7 @@ func (w *MasterWindow) updateLocked() {
 
 		width := d.MeasureString(s).Ceil()
 
-		bounds := w.img.Bounds()
+		bounds := w.bounds
 		bounds.Min.X = bounds.Max.X - width
 		bounds.Min.Y = bounds.Max.Y - (w.ctx.Style.Font.Metrics().Ascent + w.ctx.Style.Font.Metrics().Descent).Ceil()
 		draw.Draw(w.img, bounds, image.Black, bounds.Min, draw.Src)
