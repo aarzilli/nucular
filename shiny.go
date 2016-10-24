@@ -152,14 +152,14 @@ func (w *MasterWindow) handleEventLocked(ei interface{}) bool {
 			w.bounds = w.wndb.Bounds()
 			w.bounds.Max.Y = w.bounds.Min.Y + sz.Y
 			w.bounds.Max.X = w.bounds.Min.X + sz.X
-			w.updateLocked()
 		} else {
 			if w.wndb != nil {
 				w.wndb.Release()
 			}
 			w.setupBuffer(sz)
-			w.updateLocked()
 		}
+		w.prevCmds = nil
+		w.Changed()
 
 	case mouse.Event:
 		changed := atomic.LoadInt32(&w.ctx.changed)
