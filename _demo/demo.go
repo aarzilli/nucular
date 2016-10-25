@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"image/color"
 	"io/ioutil"
+	"os"
+	"runtime/pprof"
+	"runtime/trace"
 	"time"
 
 	"github.com/aarzilli/nucular"
@@ -13,6 +16,7 @@ import (
 
 var whichdemo int = 4
 
+const dotrace = false
 const scaling = 1.8
 
 //var theme nucular.Theme = nucular.WhiteTheme
@@ -20,6 +24,15 @@ var theme nstyle.Theme = nstyle.DarkTheme
 
 func main() {
 	var wnd *nucular.MasterWindow
+
+	if dotrace {
+		fh, _ := os.Create("demo.trace.out")
+		if fh != nil {
+			defer fh.Close()
+			trace.Start(fh)
+			defer trace.Stop()
+		}
+	}
 
 	switch whichdemo {
 	case 0:
@@ -62,6 +75,13 @@ func main() {
 	}
 	wnd.SetStyle(nstyle.FromTheme(theme, scaling))
 	wnd.Main()
+	if dotrace {
+		fh, _ := os.Create("demo.heap.pprof")
+		if fh != nil {
+			defer fh.Close()
+			pprof.WriteHeapProfile(fh)
+		}
+	}
 }
 
 func buttonDemo(w *nucular.Window) {
