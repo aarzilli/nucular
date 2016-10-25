@@ -4,6 +4,8 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"time"
+	"unicode"
 
 	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/mouse"
@@ -158,6 +160,11 @@ type TextEditor struct {
 	Undo                   textUndoState
 
 	drawchunks []drawchunk
+
+	lastClickCoord  image.Point
+	lastClickTime   time.Time
+	clickCount      int
+	trueSelectStart int
 }
 
 type drawchunk struct {
@@ -228,25 +235,6 @@ const (
 	TextEditSingleLine TextEditType = iota
 	TextEditMultiLine
 )
-
-type textFind struct {
-	X         int
-	Y         int
-	Height    int
-	FirstChar int
-	Length    int
-	PrevFirst int
-}
-
-type textEditRow struct {
-	X0             int
-	X1             int
-	BaselineYDelta int
-	Ymin           int
-	Ymax           int
-	NumChars       int
-	CharPos        []int
-}
 
 type textUndoRecord struct {
 	Where        int
@@ -371,14 +359,36 @@ func (edit *TextEditor) indexToCoord(index int, font font.Face, row_height int) 
 	return image.Point{x, drawchunk.Y + drawchunk.H/2}
 }
 
+func (state *TextEditor) doubleClick(coord image.Point) bool {
+	abs := func(x int) int {
+		if x < 0 {
+			return -x
+		}
+		return x
+	}
+	r := time.Since(state.lastClickTime) < 200*time.Millisecond && abs(state.lastClickCoord.X-coord.X) < 5 && abs(state.lastClickCoord.Y-coord.Y) < 5
+	state.lastClickCoord = coord
+	state.lastClickTime = time.Now()
+	return r
+
+}
+
 func (state *TextEditor) click(coord image.Point, font font.Face, row_height int) {
 	/* API click: on mouse down, move the cursor to the clicked location,
 	 * and reset the selection */
 	state.Cursor = state.locateCoord(coord, font, row_height)
 
 	state.SelectStart = state.Cursor
+	state.trueSelectStart = state.Cursor
 	state.SelectEnd = state.Cursor
 	state.HasPreferredX = false
+
+	switch state.clickCount {
+	case 2:
+		state.SelectWord(state.SelectEnd)
+	case 3:
+		state.SelectLine(state.SelectEnd)
+	}
 }
 
 func (state *TextEditor) drag(coord image.Point, font font.Face, row_height int) {
@@ -387,9 +397,33 @@ func (state *TextEditor) drag(coord image.Point, font font.Face, row_height int)
 	var p int = state.locateCoord(coord, font, row_height)
 	if state.SelectStart == state.SelectEnd {
 		state.SelectStart = state.Cursor
+		state.trueSelectStart = p
 	}
 	state.SelectEnd = p
 	state.Cursor = state.SelectEnd
+
+	switch state.clickCount {
+	case 2:
+		state.SelectWord(p)
+	case 3:
+		state.SelectLine(p)
+	}
+}
+
+func (state *TextEditor) SelectWord(end int) {
+	state.SelectStart = state.trueSelectStart
+	state.SelectEnd = end
+	state.sortselection()
+	state.SelectStart = state.towd(state.SelectStart, -1, false)
+	state.SelectEnd = state.towd(state.SelectEnd, +1, true)
+}
+
+func (state *TextEditor) SelectLine(end int) {
+	state.SelectStart = state.trueSelectStart
+	state.SelectEnd = end
+	state.sortselection()
+	state.SelectStart = state.tonl(state.SelectStart-1, -1)
+	state.SelectEnd = state.tonl(state.SelectEnd, +1)
 }
 
 func (state *TextEditor) clamp() {
@@ -472,38 +506,98 @@ func (state *TextEditor) moveToLast() {
 	}
 }
 
-func isWordBoundary(state *TextEditor, idx int) bool {
-	if idx <= 0 {
-		return true
+// Moves to the beginning or end of a line
+func (state *TextEditor) tonl(start int, dir int) int {
+	sz := len(state.Buffer)
+
+	i := start
+	if i < 0 {
+		return 0
 	}
-	c := state.Buffer[idx]
-	return c == ' ' || c == '\t' || c == 0x3000 || c == ',' || c == ';' || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' || c == '|'
+	if i >= sz {
+		i = sz - 1
+	}
+	for ; (i >= 0) && (i < sz); i += dir {
+		c := state.Buffer[i]
+
+		if c == '\n' {
+			return i + 1
+		}
+	}
+	if dir < 0 {
+		return 0
+	} else {
+		return sz
+	}
 }
 
-func (state *TextEditor) moveToWordPrevious() int {
-	var c int = state.Cursor - 1
-	for c >= 0 && !isWordBoundary(state, c) {
-		c--
+// Moves to the beginning or end of an alphanumerically delimited word
+func (state *TextEditor) towd(start int, dir int, dontForceAdvance bool) int {
+	first := (dir < 0)
+	notfirst := !first
+	var i int
+	for i = start; (i >= 0) && (i < len(state.Buffer)); i += dir {
+		c := state.Buffer[i]
+		if !(unicode.IsLetter(c) || unicode.IsDigit(c) || (c == '_')) {
+			if !first && !dontForceAdvance {
+				i++
+			}
+			break
+		}
+		first = notfirst
 	}
-
-	if c < 0 {
-		c = 0
+	if i < 0 {
+		i = 0
 	}
-
-	return c
+	return i
 }
 
-func (state *TextEditor) moveToWordNext() int {
-	var c int = state.Cursor + 1
-	for c < len(state.Buffer) && !isWordBoundary(state, c) {
-		c++
-	}
+// Moves to the beginning or end of a space delimited word
+func (state *TextEditor) tospc(start int, dir int) int {
+	return state.tof(start, dir, unicode.IsSpace)
+}
 
-	if c > len(state.Buffer) {
-		c = len(state.Buffer)
+// Moves to the first position where f returns true
+func (state *TextEditor) tof(start int, dir int, f func(rune) bool) int {
+	first := (dir < 0)
+	notfirst := !first
+	var i int
+	for i = start; (i >= 0) && (i < len(state.Buffer)); i += dir {
+		c := state.Buffer[i]
+		if f(c) {
+			if !first {
+				i++
+			}
+			break
+		}
+		first = notfirst
 	}
+	if i < 0 {
+		i = 0
+	}
+	return i
+}
 
-	return c
+// Moves to the beginning or end of something that looks like a file path
+func (state *TextEditor) tofp(start int, dir int) int {
+	first := (dir < 0)
+	notfirst := !first
+	var i int
+	for i = start; (i >= 0) && (i < len(state.Buffer)); i += dir {
+		c := state.Buffer[i]
+		if !(unicode.IsLetter(c) || unicode.IsDigit(c) || (c == '_') || (c == '-') || (c == '+') || (c == '/') || (c == '=') || (c == '~') || (c == '!') || (c == ':') || (c == ',') || (c == '.')) {
+			if !first {
+				i++
+			}
+			break
+		}
+		first = notfirst
+	}
+	if i < 0 {
+		i = 0
+	}
+	return i
+
 }
 
 func (state *TextEditor) prepSelectionAtCursor() {
@@ -610,14 +704,14 @@ retry:
 				if !textHasSelection(state) {
 					state.prepSelectionAtCursor()
 				}
-				state.Cursor = state.moveToWordPrevious()
+				state.Cursor = state.towd(state.Cursor-1, -1, false)
 				state.SelectEnd = state.Cursor
 				state.clamp()
 			} else {
 				if textHasSelection(state) {
 					state.moveToFirst()
 				} else {
-					state.Cursor = state.moveToWordPrevious()
+					state.Cursor = state.towd(state.Cursor-1, -1, false)
 					state.clamp()
 				}
 			}
@@ -650,14 +744,14 @@ retry:
 				if !textHasSelection(state) {
 					state.prepSelectionAtCursor()
 				}
-				state.Cursor = state.moveToWordNext()
+				state.Cursor = state.towd(state.Cursor, +1, false)
 				state.SelectEnd = state.Cursor
 				state.clamp()
 			} else {
 				if textHasSelection(state) {
 					state.moveToLast()
 				} else {
-					state.Cursor = state.moveToWordNext()
+					state.Cursor = state.towd(state.Cursor, +1, false)
 					state.clamp()
 				}
 			}
@@ -1168,6 +1262,14 @@ func (ed *TextEditor) doEdit(bounds rect.Rect, style *nstyle.Edit, inp *Input) (
 		if select_all {
 			ed.SelectAll()
 		} else if is_hovered && inp.Mouse.Buttons[mouse.ButtonLeft].Down && inp.Mouse.Buttons[mouse.ButtonLeft].Clicked {
+			if ed.doubleClick(coord) {
+				ed.clickCount++
+				if ed.clickCount > 3 {
+					ed.clickCount = 3
+				}
+			} else {
+				ed.clickCount = 1
+			}
 			ed.click(coord, font, row_height)
 		} else if is_hovered && inp.Mouse.Buttons[mouse.ButtonLeft].Down && (indelta.X != 0.0 || indelta.Y != 0.0) {
 			ed.drag(coord, font, row_height)
