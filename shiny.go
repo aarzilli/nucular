@@ -19,7 +19,7 @@ import (
 	"github.com/aarzilli/nucular/rect"
 	nstyle "github.com/aarzilli/nucular/style"
 
-	"github.com/golang/freetype/raster"
+	"github.com/aarzilli/nucular/internal/freetype/raster"
 
 	"golang.org/x/exp/shiny/driver"
 	"golang.org/x/exp/shiny/screen"
