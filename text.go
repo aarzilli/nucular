@@ -273,7 +273,7 @@ func strDeleteText(s []rune, pos int, dlen int) []rune {
 	return s
 }
 
-func textHasSelection(s *TextEditor) bool {
+func (s *TextEditor) hasSelection() bool {
 	return s.SelectStart != s.SelectEnd
 }
 
@@ -385,9 +385,9 @@ func (state *TextEditor) click(coord image.Point, font font.Face, row_height int
 
 	switch state.clickCount {
 	case 2:
-		state.SelectWord(state.SelectEnd)
+		state.selectWord(state.SelectEnd)
 	case 3:
-		state.SelectLine(state.SelectEnd)
+		state.selectLine(state.SelectEnd)
 	}
 }
 
@@ -404,13 +404,13 @@ func (state *TextEditor) drag(coord image.Point, font font.Face, row_height int)
 
 	switch state.clickCount {
 	case 2:
-		state.SelectWord(p)
+		state.selectWord(p)
 	case 3:
-		state.SelectLine(p)
+		state.selectLine(p)
 	}
 }
 
-func (state *TextEditor) SelectWord(end int) {
+func (state *TextEditor) selectWord(end int) {
 	state.SelectStart = state.trueSelectStart
 	state.SelectEnd = end
 	state.sortselection()
@@ -418,7 +418,7 @@ func (state *TextEditor) SelectWord(end int) {
 	state.SelectEnd = state.towd(state.SelectEnd, +1, true)
 }
 
-func (state *TextEditor) SelectLine(end int) {
+func (state *TextEditor) selectLine(end int) {
 	state.SelectStart = state.trueSelectStart
 	state.SelectEnd = end
 	state.sortselection()
@@ -428,7 +428,7 @@ func (state *TextEditor) SelectLine(end int) {
 
 func (state *TextEditor) clamp() {
 	/* make the selection/cursor state valid if client altered the string */
-	if textHasSelection(state) {
+	if state.hasSelection() {
 		if state.SelectStart > len(state.Buffer) {
 			state.SelectStart = len(state.Buffer)
 		}
@@ -461,7 +461,7 @@ func (edit *TextEditor) DeleteSelection() {
 	/* delete the section */
 	edit.clamp()
 
-	if textHasSelection(edit) {
+	if edit.hasSelection() {
 		if edit.SelectStart < edit.SelectEnd {
 			edit.Delete(edit.SelectStart, edit.SelectEnd-edit.SelectStart)
 			edit.Cursor = edit.SelectStart
@@ -487,7 +487,7 @@ func (state *TextEditor) sortselection() {
 
 func (state *TextEditor) moveToFirst() {
 	/* move cursor to first character of selection */
-	if textHasSelection(state) {
+	if state.hasSelection() {
 		state.sortselection()
 		state.Cursor = state.SelectStart
 		state.SelectEnd = state.SelectStart
@@ -497,7 +497,7 @@ func (state *TextEditor) moveToFirst() {
 
 func (state *TextEditor) moveToLast() {
 	/* move cursor to last character of selection */
-	if textHasSelection(state) {
+	if state.hasSelection() {
 		state.sortselection()
 		state.clamp()
 		state.Cursor = state.SelectEnd
@@ -602,7 +602,7 @@ func (state *TextEditor) tofp(start int, dir int) int {
 
 func (state *TextEditor) prepSelectionAtCursor() {
 	/* update selection and cursor to match each other */
-	if !textHasSelection(state) {
+	if !state.hasSelection() {
 		state.SelectEnd = state.Cursor
 		state.SelectStart = state.SelectEnd
 	} else {
@@ -615,7 +615,7 @@ func (edit *TextEditor) Cut() int {
 		return 0
 	}
 	/* API cut: delete selection */
-	if textHasSelection(edit) {
+	if edit.hasSelection() {
 		edit.DeleteSelection() /* implicitly clamps */
 		edit.HasPreferredX = false
 		return 1
@@ -660,7 +660,7 @@ func (edit *TextEditor) Text(text []rune) {
 			continue
 		}
 
-		if edit.InsertMode && !textHasSelection(edit) && edit.Cursor < len(edit.Buffer) {
+		if edit.InsertMode && !edit.hasSelection() && edit.Cursor < len(edit.Buffer) {
 			edit.makeundoReplace(edit.Cursor, 1, 1)
 			edit.Buffer = strDeleteText(edit.Buffer, edit.Cursor, 1)
 			edit.Buffer = strInsertText(edit.Buffer, edit.Cursor, text[i:i+1])
@@ -695,20 +695,30 @@ retry:
 			}
 		}
 
+	case key.CodeK:
+		if readOnly {
+			return
+		}
+		if e.Modifiers&key.ModControl != 0 {
+			state.trueSelectStart = state.Cursor
+			state.selectLine(state.Cursor)
+			state.DeleteSelection()
+		}
+
 	case key.CodeInsert:
 		state.InsertMode = !state.InsertMode
 
 	case key.CodeLeftArrow:
 		if e.Modifiers&key.ModControl != 0 {
 			if e.Modifiers&key.ModShift != 0 {
-				if !textHasSelection(state) {
+				if !state.hasSelection() {
 					state.prepSelectionAtCursor()
 				}
 				state.Cursor = state.towd(state.Cursor-1, -1, false)
 				state.SelectEnd = state.Cursor
 				state.clamp()
 			} else {
-				if textHasSelection(state) {
+				if state.hasSelection() {
 					state.moveToFirst()
 				} else {
 					state.Cursor = state.towd(state.Cursor-1, -1, false)
@@ -729,7 +739,7 @@ retry:
 			} else {
 				/* if currently there's a selection,
 				 * move cursor to start of selection */
-				if textHasSelection(state) {
+				if state.hasSelection() {
 					state.moveToFirst()
 				} else if state.Cursor > 0 {
 					state.Cursor--
@@ -741,14 +751,14 @@ retry:
 	case key.CodeRightArrow:
 		if e.Modifiers&key.ModControl != 0 {
 			if e.Modifiers&key.ModShift != 0 {
-				if !textHasSelection(state) {
+				if !state.hasSelection() {
 					state.prepSelectionAtCursor()
 				}
 				state.Cursor = state.towd(state.Cursor, +1, false)
 				state.SelectEnd = state.Cursor
 				state.clamp()
 			} else {
-				if textHasSelection(state) {
+				if state.hasSelection() {
 					state.moveToLast()
 				} else {
 					state.Cursor = state.towd(state.Cursor, +1, false)
@@ -768,7 +778,7 @@ retry:
 			} else {
 				/* if currently there's a selection,
 				 * move cursor to end of selection */
-				if textHasSelection(state) {
+				if state.hasSelection() {
 					state.moveToLast()
 				} else {
 					state.Cursor++
@@ -785,7 +795,7 @@ retry:
 
 		if e.Modifiers&key.ModShift != 0 {
 			state.prepSelectionAtCursor()
-		} else if textHasSelection(state) {
+		} else if state.hasSelection() {
 			state.moveToLast()
 		}
 
@@ -811,7 +821,7 @@ retry:
 
 		if e.Modifiers&key.ModShift != 0 {
 			state.prepSelectionAtCursor()
-		} else if textHasSelection(state) {
+		} else if state.hasSelection() {
 			state.moveToFirst()
 		}
 
@@ -835,7 +845,7 @@ retry:
 		if readOnly {
 			return
 		}
-		if textHasSelection(state) {
+		if state.hasSelection() {
 			state.DeleteSelection()
 		} else {
 			if state.Cursor < len(state.Buffer) {
@@ -849,16 +859,20 @@ retry:
 		if readOnly {
 			return
 		}
-		if textHasSelection(state) {
+		switch {
+		case state.hasSelection():
 			state.DeleteSelection()
-		} else {
+		case e.Modifiers&key.ModControl != 0:
+			state.SelectEnd = state.Cursor
+			state.SelectStart = state.towd(state.Cursor-1, -1, false)
+			state.DeleteSelection()
+		default:
 			state.clamp()
 			if state.Cursor > 0 {
 				state.Delete(state.Cursor-1, 1)
 				state.Cursor--
 			}
 		}
-
 		state.HasPreferredX = false
 
 	case key.CodeHome:
@@ -876,14 +890,7 @@ retry:
 			}
 		} else {
 			state.clamp()
-			start := state.Cursor - 1
-			for start >= 0 {
-				if state.Buffer[start] == '\n' {
-					break
-				}
-				start--
-			}
-			start++
+			start := state.tonl(state.Cursor-1, -1)
 			if e.Modifiers&key.ModShift != 0 {
 				state.clamp()
 				state.prepSelectionAtCursor()
@@ -896,6 +903,14 @@ retry:
 				state.Cursor = start
 				state.HasPreferredX = false
 			}
+		}
+
+	case key.CodeA:
+		if e.Modifiers&key.ModControl != 0 {
+			state.clamp()
+			state.moveToFirst()
+			state.Cursor = state.tonl(state.Cursor-1, -1)
+			state.HasPreferredX = false
 		}
 
 	case key.CodeEnd:
@@ -913,12 +928,9 @@ retry:
 			}
 		} else {
 			state.clamp()
-			end := state.Cursor
-			for end < len(state.Buffer) {
-				if state.Buffer[end] == '\n' {
-					break
-				}
-				end++
+			end := state.tonl(state.Cursor, +1)
+			if end > state.Cursor {
+				end--
 			}
 			if e.Modifiers&key.ModShift != 0 {
 				state.clamp()
@@ -932,6 +944,18 @@ retry:
 				state.HasPreferredX = false
 				state.Cursor = end
 			}
+		}
+
+	case key.CodeE:
+		if e.Modifiers&key.ModControl != 0 {
+			end := state.tonl(state.Cursor, +1)
+			if end > state.Cursor {
+				end--
+			}
+			state.clamp()
+			state.moveToFirst()
+			state.HasPreferredX = false
+			state.Cursor = end
 		}
 	}
 }
