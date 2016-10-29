@@ -7,7 +7,7 @@
 // Package win32 implements a partial shiny screen driver using the Win32 API.
 // It provides window, lifecycle, key, and mouse management, but no drawing.
 // That is left to windriver (using GDI) or gldriver (using DirectX via ANGLE).
-package win32
+package win32 // import "golang.org/x/exp/shiny/driver/internal/win32"
 
 import (
 	"fmt"
