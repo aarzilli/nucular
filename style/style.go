@@ -11,8 +11,8 @@ import (
 
 	"golang.org/x/image/font"
 
-	"github.com/aarzilli/nucular/internal/freetype"
-	"github.com/aarzilli/nucular/internal/freetype/truetype"
+	"github.com/golang/freetype"
+	"github.com/golang/freetype/truetype"
 )
 
 type WidgetStates int

@@ -13,8 +13,8 @@ import (
 	"image"
 	"image/draw"
 
-	"github.com/aarzilli/nucular/internal/freetype/raster"
-	"github.com/aarzilli/nucular/internal/freetype/truetype"
+	"github.com/golang/freetype/raster"
+	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
@@ -24,10 +24,9 @@ import (
 // position for the mask image. Sub-pixel positions are quantized to
 // nXFractions possible values in both the x and y directions.
 const (
-	nLoadedGlyphs = 2048
-	nGlyphs       = 256
-	nXFractions   = 4
-	nYFractions   = 1
+	nGlyphs     = 256
+	nXFractions = 4
+	nYFractions = 1
 )
 
 // An entry in the glyph cache is keyed explicitly by the glyph index and
@@ -72,7 +71,7 @@ type Context struct {
 	fontSize, dpi float64
 	scale         fixed.Int26_6
 	hinting       font.Hinting
-	// cache is the rendered glyph cache.
+	// cache is the glyph cache.
 	cache [nGlyphs * nXFractions * nYFractions]cacheEntry
 }
 

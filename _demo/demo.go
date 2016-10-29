@@ -32,12 +32,6 @@ func main() {
 			trace.Start(fh)
 			defer trace.Stop()
 		}
-		fhp, _ := os.Create("demo.cpu.pprof")
-		if fhp != nil {
-			defer fhp.Close()
-			pprof.StartCPUProfile(fhp)
-			defer pprof.StopCPUProfile()
-		}
 	}
 
 	switch whichdemo {

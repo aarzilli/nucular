@@ -170,19 +170,6 @@ func (g *GlyphBuf) Load(f *Font, scale fixed.Int26_6, i Index, h font.Hinting) e
 	return nil
 }
 
-func (a *face) loadGlyph(idx Index) (*GlyphBuf, error) {
-	e := &a.glyphCache[int(idx)%len(a.glyphCache)]
-	if e.key == idx {
-		return &e.val, nil
-	}
-	err := e.val.Load(a.f, a.scale, idx, a.hinting)
-	if err != nil {
-		return nil, err
-	}
-	e.key = idx
-	return &e.val, nil
-}
-
 func (g *GlyphBuf) load(recursion uint32, i Index, useMyMetrics bool) (err error) {
 	// The recursion limit here is arbitrary, but defends against malformed glyphs.
 	if recursion >= 32 {
