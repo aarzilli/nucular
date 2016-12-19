@@ -129,6 +129,7 @@ const (
 	WindowNoScrollbar
 	WindowNoHScrollbar
 	WindowTitle
+	WindowContextualReplace
 
 	windowPrivate
 	windowHidden
@@ -2529,6 +2530,13 @@ func (win *Window) ContextualOpen(flags WindowFlags, size image.Point, trigger_b
 	body.Y = win.ctx.Input.Mouse.Pos.Y
 	body.W = size.X
 	body.H = size.Y
+
+	if flags&WindowContextualReplace != 0 {
+		if popup := win.ctx.Windows[len(win.ctx.Windows)-1]; popup.flags&windowContextual != 0 {
+			body.X = popup.Bounds.X
+			body.Y = popup.Bounds.Y
+		}
+	}
 
 	atomic.AddInt32(&win.ctx.changed, 1)
 	return win.ctx.nonblockOpen(flags|windowContextual|WindowNoScrollbar, body, trigger_bounds, updateFn)
