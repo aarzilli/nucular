@@ -2083,8 +2083,9 @@ func doSlider(win *Window, bounds rect.Rect, minval float64, val float64, maxval
 	cursor_offset = (slider_value - minval) / step
 
 	cursor.H = bounds.H
-	cursor.W = bounds.W / (slider_steps + 1)
-	cursor.X = bounds.X + int((float64(cursor.W) * cursor_offset))
+	tempW := float64(bounds.W) / float64(slider_steps+1)
+	cursor.W = int(tempW)
+	cursor.X = bounds.X + int((tempW * cursor_offset))
 	cursor.Y = bounds.Y
 
 	out := &win.widgets
