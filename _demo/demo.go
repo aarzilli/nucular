@@ -23,7 +23,7 @@ const scaling = 1.8
 var theme nstyle.Theme = nstyle.DarkTheme
 
 func main() {
-	var wnd *nucular.MasterWindow
+	var wnd nucular.MasterWindow
 
 	if dotrace {
 		fh, _ := os.Create("demo.trace.out")

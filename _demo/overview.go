@@ -197,7 +197,7 @@ func (od *overviewDemo) overviewDemo(w *nucular.Window) {
 			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Code == key.CodeHyphenMinus):
 				mw.Style().Scale(scaling - 0.1)
 			case (e.Modifiers == key.ModControl) && (e.Code == key.CodeF):
-				mw.Perf = !mw.Perf
+				mw.SetPerf(!mw.GetPerf())
 			}
 		}
 	}
@@ -984,7 +984,7 @@ func (od *overviewDemo) aboutPopup(w *nucular.Window) {
 	w.Label("based on Nuklear by Micha Mettke", "LC")
 }
 
-func (od *overviewDemo) showAppAbout(mw *nucular.MasterWindow) {
+func (od *overviewDemo) showAppAbout(mw nucular.MasterWindow) {
 	var wf nucular.WindowFlags
 
 	if od.Border {
