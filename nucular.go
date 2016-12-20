@@ -131,6 +131,7 @@ const (
 	windowCombo
 	windowMenu
 	windowTooltip
+	windowEnabled
 
 	WindowDefaultFlags = WindowBorder | WindowMovable | WindowScalable | WindowClosable | WindowMinimizable | WindowTitle
 )
@@ -714,6 +715,7 @@ func panelEnd(ctx *context, window *Window) {
 		}
 	}
 
+	layout.Flags |= windowEnabled
 	window.flags = layout.Flags
 
 	/* helper to make sure you have a 'nk_tree_push'
@@ -2718,6 +2720,10 @@ func (win *Window) GroupBegin(title string, flags WindowFlags) *Window {
 	}
 
 	flags |= windowSub | windowGroup
+
+	if win.flags&windowEnabled != 0 {
+		flags |= windowEnabled
+	}
 
 	sw.Bounds = bounds
 	sw.flags = flags

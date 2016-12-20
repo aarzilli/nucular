@@ -105,7 +105,7 @@ func (i *KeyboardInput) Pressed(key key.Code) bool {
 }
 
 func (win *Window) inputMaybe(widgetValid bool) *Input {
-	if widgetValid && win.toplevel() {
+	if widgetValid && win.toplevel() && win.flags&windowEnabled != 0 {
 		win.ctx.Input.Mouse.clip = win.cmds.Clip
 		return &win.ctx.Input
 	}
