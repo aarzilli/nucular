@@ -1052,10 +1052,8 @@ func (ctr *rowConstructor) Static(width ...int) {
 	ctr.StaticScaled(width...)
 }
 
-// Like Static but with scaled sizes.
-func (ctr *rowConstructor) StaticScaled(width ...int) {
-	layout := ctr.win.layout
-	panelLayout(ctr.win.ctx, ctr.win, ctr.height, len(width))
+func (win *Window) staticZeros(width []int) {
+	layout := win.layout
 
 	nzero := 0
 	used := 0
@@ -1067,7 +1065,7 @@ func (ctr *rowConstructor) StaticScaled(width ...int) {
 	}
 
 	if nzero > 0 {
-		style := ctr.win.style()
+		style := win.style()
 		spacing := style.Spacing
 		padding := style.Padding
 		panel_padding := 2 * padding.X
@@ -1084,9 +1082,40 @@ func (ctr *rowConstructor) StaticScaled(width ...int) {
 			}
 		}
 	}
+}
+
+// Like Static but with scaled sizes.
+func (ctr *rowConstructor) StaticScaled(width ...int) {
+	layout := ctr.win.layout
+	panelLayout(ctr.win.ctx, ctr.win, ctr.height, len(width))
+
+	ctr.win.staticZeros(width)
 
 	layout.Row.WidthArr = width
 	layout.Row.Type = layoutStatic
+	layout.Row.ItemWidth = 0
+	layout.Row.ItemRatio = 0.0
+	layout.Row.ItemOffset = 0
+	layout.Row.Filled = 0
+}
+
+// Reset static row
+func (win *Window) LayoutResetStatic(width ...int) {
+	for i := range width {
+		width[i] = win.ctx.scale(width[i])
+	}
+	win.LayoutResetStaticScaled(width...)
+}
+
+func (win *Window) LayoutResetStaticScaled(width ...int) {
+	layout := win.layout
+	if layout.Row.Type != layoutStatic {
+		panic(WrongLayoutErr)
+	}
+	win.staticZeros(width)
+	layout.Row.Index = 0
+	layout.Row.Columns = len(width)
+	layout.Row.WidthArr = width
 	layout.Row.ItemWidth = 0
 	layout.Row.ItemRatio = 0.0
 	layout.Row.ItemOffset = 0
