@@ -7,6 +7,7 @@ import (
 	"github.com/aarzilli/nucular/label"
 	"github.com/aarzilli/nucular/rect"
 
+	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/mouse"
 )
 
@@ -93,4 +94,38 @@ func TestWindowEnabledFlagOnGroup(t *testing.T) {
 	if clicked != 1 {
 		t.Fatalf("button wasn't clicked")
 	}
+}
+
+func TestEditorEndKey(t *testing.T) {
+	const testString = "this is a test string"
+	const testString2 = testString + "\n" + testString
+	var ed TextEditor
+	ed.Flags = EditSelectable | EditMultiline
+	ed.Active = true
+	ed.Buffer = []rune(testString)
+	w := NewTestWindow(0, image.Pt(640, 480), func(w *Window) {
+		w.Row(0).Dynamic(1)
+		ed.Edit(w)
+	})
+
+	check := func(tgt int, title string) {
+		if ed.Cursor != tgt {
+			t.Fatalf("Cursor position %d, expected %d (%s)", ed.Cursor, tgt, title)
+		}
+	}
+
+	w.Update()
+	w.TypeKey(key.Event{Code: key.CodeEnd})
+	check(len(testString), "singleline")
+
+	w.TypeKey(key.Event{Code: key.CodeEnd})
+	check(len(testString), "singleline 2")
+
+	ed.Cursor = 0
+	ed.Buffer = []rune(testString2)
+	w.TypeKey(key.Event{Code: key.CodeEnd})
+	check(len(testString), "multiline")
+
+	w.TypeKey(key.Event{Code: key.CodeEnd})
+	check(len(testString), "multiline 2")
 }
