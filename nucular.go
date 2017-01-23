@@ -49,10 +49,11 @@ type Window struct {
 	// editor of the active property widget (see PropertyInt, PropertyFloat)
 	editor *TextEditor
 	// update function
-	updateFn UpdateFn
-	usingSub bool
-	began    bool
-	rowCtor  rowConstructor
+	updateFn      UpdateFn
+	usingSub      bool
+	began         bool
+	rowCtor       rowConstructor
+	menuItemWidth int
 }
 
 type treeNode struct {
@@ -132,6 +133,7 @@ const (
 	windowMenu
 	windowTooltip
 	windowEnabled
+	windowHDynamic
 
 	WindowDefaultFlags = WindowBorder | WindowMovable | WindowScalable | WindowClosable | WindowMinimizable | WindowTitle
 )
@@ -462,6 +464,13 @@ func (win *Window) specialPanelBegin() {
 		} else {
 			win.Bounds.X = win.Bounds.X
 			win.Bounds.Y = win.Bounds.Y
+		}
+	}
+
+	if win.flags&windowHDynamic != 0 && !win.first {
+		uw := win.menuItemWidth + 2*win.style().Padding.X + 2*win.style().Border
+		if uw < win.Bounds.W {
+			win.Bounds.W = uw
 		}
 	}
 
@@ -2508,10 +2517,16 @@ func (win *Window) Close() {
 ///////////////////////////////////////////////////////////////////////////////////
 
 // Opens a contextual menu with maximum size equal to 'size'.
+// Specify size == image.Point{} if you want a menu big enough to fit its larges MenuItem
 func (win *Window) ContextualOpen(flags WindowFlags, size image.Point, trigger_bounds rect.Rect, updateFn UpdateFn) *Window {
 	if popup := win.ctx.Windows[len(win.ctx.Windows)-1]; popup.header == trigger_bounds {
 		popup.specialPanelBegin()
 		return popup
+	}
+	if size == (image.Point{}) {
+		size.X = nk_null_rect.W
+		size.Y = nk_null_rect.H
+		flags = flags | windowHDynamic
 	}
 	size.X = win.ctx.scale(size.X)
 	size.Y = win.ctx.scale(size.Y)
@@ -2544,6 +2559,13 @@ func (win *Window) MenuItem(lbl label.Label) bool {
 	state, bounds := win.widgetFitting(style.ContextualButton.Padding)
 	if !state {
 		return false
+	}
+
+	if win.flags&windowHDynamic != 0 {
+		w := FontWidth(style.Font, lbl.Text) + 2*style.ContextualButton.Padding.X
+		if w > win.menuItemWidth {
+			win.menuItemWidth = w
+		}
 	}
 
 	in := win.inputMaybe(state)
@@ -2681,6 +2703,7 @@ func (win *Window) ComboSimple(items []string, selected int, item_height int) in
 ///////////////////////////////////////////////////////////////////////////////////
 
 // Adds a menu to win with a text label.
+// If width == 0 the width will be automatically adjusted to fit the largest MenuItem
 func (win *Window) Menu(lbl label.Label, width int, updateFn UpdateFn) *Window {
 	state, header := win.widget()
 	if !state {
@@ -2703,7 +2726,14 @@ func (win *Window) Menu(lbl label.Label, width int, updateFn UpdateFn) *Window {
 		return nil
 	}
 
+	flags := windowMenu | WindowNoScrollbar
+
 	width = win.ctx.scale(width)
+
+	if width == 0 {
+		width = nk_null_rect.W
+		flags = flags | windowHDynamic
+	}
 
 	var body rect.Rect
 	body.X = header.X
@@ -2711,7 +2741,7 @@ func (win *Window) Menu(lbl label.Label, width int, updateFn UpdateFn) *Window {
 	body.Y = header.Y + header.H
 	body.H = (win.layout.Bounds.Y + win.layout.Bounds.H) - body.Y
 
-	return win.ctx.nonblockOpen(windowMenu|WindowNoScrollbar, body, header, updateFn)
+	return win.ctx.nonblockOpen(flags, body, header, updateFn)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

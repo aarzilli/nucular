@@ -97,6 +97,8 @@ type overviewDemo struct {
 
 	Resizing1, Resizing2, Resizing3, Resizing4 bool
 
+	edEntry1, edEntry2, edEntry3 nucular.TextEditor
+
 	Theme nstyle.Theme
 }
 
@@ -181,6 +183,13 @@ func newOverviewDemo() (od *overviewDemo) {
 	od.BoxEditor.Flags = nucular.EditBox | nucular.EditNeverInsertMode
 	od.Text1Editor.Flags = nucular.EditField | nucular.EditSigEnter
 	od.Text1Editor.Maxlen = 64
+
+	od.edEntry1.Flags = nucular.EditSimple
+	od.edEntry1.Buffer = []rune("Menu Item 1")
+	od.edEntry2.Flags = nucular.EditSimple
+	od.edEntry2.Buffer = []rune("Menu Item 2")
+	od.edEntry3.Flags = nucular.EditSimple
+	od.edEntry3.Buffer = []rune("Menu Item 3")
 
 	return od
 }
@@ -543,10 +552,9 @@ func (od *overviewDemo) errorPopup(w *nucular.Window) {
 
 func (od *overviewDemo) overviewPopup(w *nucular.Window) {
 	// Menu contextual
-	w.Row(30).Static(180)
-	bounds := w.WidgetBounds()
+	w.Row(30).Dynamic(1)
 	w.Label("Right click me for menu", "LC")
-	if w := w.ContextualOpen(0, image.Point{100, 300}, bounds, nil); w != nil {
+	if w := w.ContextualOpen(0, image.Point{100, 300}, w.LastWidgetBounds, nil); w != nil {
 		w.Row(25).Dynamic(1)
 		w.CheckboxText("Menu", &od.ShowMenu)
 		w.Progress(&od.PProg, 100, true)
@@ -566,6 +574,22 @@ func (od *overviewDemo) overviewPopup(w *nucular.Window) {
 		w.SelectableLabel(sel(3), "LC", &od.PSelect[3])
 	}
 
+	w.Label("Right click me for a simple autoresizing menu", "LC")
+	if w := w.ContextualOpen(0, image.Point{}, w.LastWidgetBounds, nil); w != nil {
+		w.Row(25).Dynamic(1)
+		w.MenuItem(label.TA(string(od.edEntry1.Buffer), "LC"))
+		w.MenuItem(label.TA(string(od.edEntry2.Buffer), "LC"))
+		w.MenuItem(label.TA(string(od.edEntry3.Buffer), "LC"))
+	}
+
+	w.Row(30).Static(100, 150)
+	w.Label("Menu Item 1:", "LC")
+	od.edEntry1.Edit(w)
+	w.Label("Menu Item 2:", "LC")
+	od.edEntry2.Edit(w)
+	w.Label("Menu Item 3:", "LC")
+	od.edEntry3.Edit(w)
+
 	// Popup
 	w.Row(30).Static(100, 50)
 	w.Label("Popup:", "LC")
@@ -575,17 +599,15 @@ func (od *overviewDemo) overviewPopup(w *nucular.Window) {
 
 	// Tooltip
 	w.Row(30).Static(180)
-	bounds = w.WidgetBounds()
 	w.Label("Hover me for tooltip", "LC")
-	if w.Input().Mouse.HoveringRect(bounds) {
+	if w.Input().Mouse.HoveringRect(w.LastWidgetBounds) {
 		w.Tooltip("This is a tooltip")
 	}
 
 	// Second tooltip
 	w.Row(30).Static(420)
-	bounds = w.WidgetBounds()
 	w.Label("Can also hover me for a different tooltip", "LC")
-	if w.Input().Mouse.HoveringRect(bounds) {
+	if w.Input().Mouse.HoveringRect(w.LastWidgetBounds) {
 		w.Tooltip("This is another tooltip")
 	}
 }
