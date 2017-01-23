@@ -509,6 +509,10 @@ func (win *Window) specialPanelBegin() {
 		win.layout.Offset = &win.Scrollbar
 	}
 
+	if win.first && (win.flags&windowContextual != 0 || win.flags&windowHDynamic != 0) {
+		ctx.trashFrame = true
+	}
+
 	win.first = false
 }
 
