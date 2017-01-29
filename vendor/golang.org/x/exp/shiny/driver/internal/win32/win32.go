@@ -183,6 +183,15 @@ func sendMouseEvent(hwnd syscall.Handle, uMsg uint32, wParam, lParam uintptr) (l
 		// distinct beginning and end. Should the intermediate events be
 		// DirNone?
 		e.Direction = mouse.DirStep
+
+		// Convert from screen to window coordinates.
+		p := _POINT{
+			int32(e.X),
+			int32(e.Y),
+		}
+		_ScreenToClient(hwnd, &p)
+		e.X = float32(p.X)
+		e.Y = float32(p.Y)
 	default:
 		panic("sendMouseEvent() called on non-mouse message")
 	}

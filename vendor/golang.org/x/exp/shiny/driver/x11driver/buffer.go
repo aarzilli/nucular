@@ -74,7 +74,7 @@ func (b *bufferImpl) postUpload() {
 	if b.released {
 		go b.cleanUp()
 	} else {
-		//swizzle.BGRA(b.buf)
+		swizzle.BGRA(b.buf)
 	}
 }
 

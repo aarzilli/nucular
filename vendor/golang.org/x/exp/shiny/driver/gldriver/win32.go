@@ -72,11 +72,11 @@ func newWindow(opts *screen.NewWindowOptions) (uintptr, error) {
 	return uintptr(w), nil
 }
 
-func showWindow(w *windowImpl) {
-	w.glctxMu.Lock()
+func initWindow(w *windowImpl) {
 	w.glctx, w.worker = gl.NewContext()
-	w.glctxMu.Unlock()
+}
 
+func showWindow(w *windowImpl) {
 	// Show makes an initial call to sizeEvent (via win32.SizeEvent), where
 	// we setup the EGL surface and GL context.
 	win32.Show(syscall.Handle(w.id))
