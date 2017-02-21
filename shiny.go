@@ -339,7 +339,6 @@ func (w *masterWindow) updateLocked() {
 		d.Dot = fixed.P(bounds.Min.X, bounds.Min.Y+w.ctx.Style.Font.Metrics().Ascent.Ceil())
 		d.DrawString(s)
 	}
-	w.ctx.Reset()
 	if nprimitives > 0 {
 		w.wnd.Upload(w.bounds.Min, w.wndb, w.bounds)
 		w.wnd.Publish()

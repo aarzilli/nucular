@@ -8,13 +8,15 @@ import (
 	"runtime/pprof"
 	"runtime/trace"
 	"time"
+	"image"
 
 	"github.com/aarzilli/nucular"
 	"github.com/aarzilli/nucular/label"
+	"github.com/aarzilli/nucular/rect"
 	nstyle "github.com/aarzilli/nucular/style"
 )
 
-var whichdemo int = 4
+var whichdemo int = 9
 
 const dotrace = false
 const scaling = 1.8
@@ -77,6 +79,8 @@ func main() {
 		pd := &panelDebug{}
 		pd.Init()
 		wnd = nucular.NewMasterWindow(pd.Update, nucular.WindowNoScrollbar)
+	case 9:
+		wnd = nucular.NewMasterWindow(nestedMenu, nucular.WindowNoScrollbar)
 	}
 	wnd.SetStyle(nstyle.FromTheme(theme, scaling))
 	wnd.Main()
@@ -247,4 +251,20 @@ func (pd *panelDebug) groupOrBlock(w *nucular.Window, name string, flags nucular
 			sw.GroupEnd()
 		}
 	}
+}
+
+func nestedMenu(w *nucular.Window) {
+	w.Row(20).Static(180)
+	w.Label("Test", "CC")
+	w.ContextualOpen(0, image.Point{0,0}, w.LastWidgetBounds, func (w *nucular.Window) {
+		w.Row(20).Dynamic(1)
+		if w.MenuItem(label.TA("Submenu", "CC")) {
+			w.ContextualOpen(0, image.Point{ 0, 0 }, rect.Rect{ 0, 0, 0, 0}, func(w *nucular.Window) {
+				w.Row(20).Dynamic(1)
+				if w.MenuItem(label.TA("Done", "CC")) {
+					fmt.Printf("done\n")
+				}
+			})
+		}
+	})
 }
