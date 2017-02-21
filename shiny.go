@@ -73,6 +73,7 @@ type masterWindow struct {
 
 	uilock  sync.Mutex
 	closing bool
+	focusedOnce bool
 }
 
 // Creates new master window
@@ -145,6 +146,12 @@ func (w *masterWindow) handleEventLocked(ei interface{}) bool {
 		c := false
 		switch cross := e.Crosses(lifecycle.StageFocused); cross {
 		case lifecycle.CrossOn:
+			if !w.focusedOnce {
+				// on linux uploads that happen before this event don't get displayed
+				// for some reason, force a reupload
+				w.focusedOnce = true
+				w.prevCmds = w.prevCmds[:0]
+			}
 			w.Focus = true
 			c = true
 		case lifecycle.CrossOff:
