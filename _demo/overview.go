@@ -100,6 +100,9 @@ type overviewDemo struct {
 	edEntry1, edEntry2, edEntry3 nucular.TextEditor
 
 	Theme nstyle.Theme
+
+	FitWidthEditor nucular.TextEditor
+	FitWidthIdx    int
 }
 
 func newOverviewDemo() (od *overviewDemo) {
@@ -190,6 +193,9 @@ func newOverviewDemo() (od *overviewDemo) {
 	od.edEntry2.Buffer = []rune("Menu Item 2")
 	od.edEntry3.Flags = nucular.EditSimple
 	od.edEntry3.Buffer = []rune("Menu Item 3")
+
+	od.FitWidthEditor.Flags = nucular.EditSimple
+	od.FitWidthEditor.Buffer = []rune("test")
 
 	return od
 }
@@ -641,7 +647,7 @@ func (od *overviewDemo) overviewLayout(w *nucular.Window) {
 		btn()
 
 		w.Row(30).Dynamic(1)
-		w.Label("Static custom column layout with generated position and custom size (LayoutRowStatic + LayoutStaticSetWidth):", "LC")
+		w.Label("Static custom column layout with generated position and custom size (LayoutRowStatic + LayoutSetWidth):", "LC")
 		w.Row(30).Static()
 		w.LayoutSetWidth(100)
 		btn()
@@ -649,6 +655,24 @@ func (od *overviewDemo) overviewLayout(w *nucular.Window) {
 		btn()
 		w.LayoutSetWidth(50)
 		btn()
+
+		w.Row(30).Dynamic(1)
+		w.Label("Static custom column layout with generated position and automatically fit size (LayoutRowStatic + LayoutFitWidth)", "LC")
+		w.Row(30).Static(100, 100, 100)
+		w.Label("Content:", "LC")
+		od.FitWidthEditor.Edit(w)
+		if w.ButtonText("Recalculate") {
+			od.FitWidthIdx++
+		}
+		for i := 0; i < 3; i++ {
+			w.Row(30).Static()
+			w.LayoutFitWidth(od.FitWidthIdx, 1)
+			w.Label(fmt.Sprintf("%02d:", i), "LC")
+			w.LayoutFitWidth(od.FitWidthIdx, 100)
+			w.Label(string(od.FitWidthEditor.Buffer), "LC")
+			w.LayoutFitWidth(od.FitWidthIdx, 1)
+			w.Label("END", "LC")
+		}
 
 		w.Row(30).Dynamic(1)
 		w.Label("Static array-based custom column layout with dynamic space in the middle (LayoutRowStatic + LayoutResetStatic):", "LC")

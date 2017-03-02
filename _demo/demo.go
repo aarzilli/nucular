@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"io/ioutil"
 	"os"
 	"runtime/pprof"
 	"runtime/trace"
 	"time"
-	"image"
 
 	"github.com/aarzilli/nucular"
 	"github.com/aarzilli/nucular/label"
@@ -16,7 +16,7 @@ import (
 	nstyle "github.com/aarzilli/nucular/style"
 )
 
-var whichdemo int = 9
+var whichdemo int = 4
 
 const dotrace = false
 const scaling = 1.8
@@ -256,10 +256,10 @@ func (pd *panelDebug) groupOrBlock(w *nucular.Window, name string, flags nucular
 func nestedMenu(w *nucular.Window) {
 	w.Row(20).Static(180)
 	w.Label("Test", "CC")
-	w.ContextualOpen(0, image.Point{0,0}, w.LastWidgetBounds, func (w *nucular.Window) {
+	w.ContextualOpen(0, image.Point{0, 0}, w.LastWidgetBounds, func(w *nucular.Window) {
 		w.Row(20).Dynamic(1)
 		if w.MenuItem(label.TA("Submenu", "CC")) {
-			w.ContextualOpen(0, image.Point{ 0, 0 }, rect.Rect{ 0, 0, 0, 0}, func(w *nucular.Window) {
+			w.ContextualOpen(0, image.Point{0, 0}, rect.Rect{0, 0, 0, 0}, func(w *nucular.Window) {
 				w.Row(20).Dynamic(1)
 				if w.MenuItem(label.TA("Done", "CC")) {
 					fmt.Printf("done\n")
