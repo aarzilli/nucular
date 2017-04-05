@@ -43,9 +43,9 @@ func main() {
 
 	switch whichdemo {
 	case 0:
-		wnd = nucular.NewMasterWindow(buttonDemo, 0)
+		wnd = nucular.NewMasterWindow(0, "Button Demo", buttonDemo)
 	case 1:
-		wnd = nucular.NewMasterWindow(basicDemo, 0)
+		wnd = nucular.NewMasterWindow(0, "Basic Demo", basicDemo)
 		go func() {
 			for {
 				time.Sleep(1 * time.Second)
@@ -58,29 +58,25 @@ func main() {
 	case 2:
 		textEditorEditor.Flags = nucular.EditSelectable
 		textEditorEditor.Buffer = []rune("prova")
-		wnd = nucular.NewMasterWindow(textEditorDemo, 0)
+		wnd = nucular.NewMasterWindow(0, "Text Editor Demo", textEditorDemo)
 	case 3:
 		var cd calcDemo
 		cd.current = &cd.a
-		wnd = nucular.NewMasterWindow(cd.calculatorDemo, 0)
+		wnd = nucular.NewMasterWindow(0, "Calculator Demo", cd.calculatorDemo)
 	case 4:
 		od := newOverviewDemo()
 		od.Theme = theme
-		wnd = nucular.NewMasterWindow(od.overviewDemo, 0)
-	case 5:
-		wnd = nucular.NewMasterWindow(horizontalSplit, nucular.WindowNoScrollbar)
-	case 6:
-		wnd = nucular.NewMasterWindow(widgetBoundsBug, nucular.WindowNoScrollbar)
+		wnd = nucular.NewMasterWindow(0, "Overview", od.overviewDemo)
 	case 7:
 		bs, _ := ioutil.ReadFile("overview.go")
 		multilineTextEditor.Buffer = []rune(string(bs))
-		wnd = nucular.NewMasterWindow(multilineTextEditorDemo, nucular.WindowNoScrollbar)
+		wnd = nucular.NewMasterWindow(nucular.WindowNoScrollbar, "Multiline Text Editor", multilineTextEditorDemo)
 	case 8:
 		pd := &panelDebug{}
 		pd.Init()
-		wnd = nucular.NewMasterWindow(pd.Update, nucular.WindowNoScrollbar)
+		wnd = nucular.NewMasterWindow(nucular.WindowNoScrollbar, "Split panel demo", pd.Update)
 	case 9:
-		wnd = nucular.NewMasterWindow(nestedMenu, nucular.WindowNoScrollbar)
+		wnd = nucular.NewMasterWindow(nucular.WindowNoScrollbar, "Nested menu demo", nestedMenu)
 	}
 	wnd.SetStyle(nstyle.FromTheme(theme, scaling))
 	wnd.Main()
@@ -138,36 +134,6 @@ func textEditorDemo(w *nucular.Window) {
 	w.Row(30).Dynamic(1)
 	textEditorEditor.Maxlen = 30
 	textEditorEditor.Edit(w)
-}
-
-func horizontalSplit(w *nucular.Window) {
-	w.Row(0).Dynamic(2)
-	if sw := w.GroupBegin("Left", nucular.WindowNoHScrollbar|nucular.WindowBorder); sw != nil {
-		sw.Row(18).Static(150)
-		for i := 0; i < 64; i++ {
-			sw.Label(fmt.Sprintf("%#02x", i), "LC")
-		}
-		sw.GroupEnd()
-	}
-	if sw := w.GroupBegin("Right", nucular.WindowNoHScrollbar|nucular.WindowBorder); sw != nil {
-		sw.Row(18).Static(150)
-		for i := 0; i < 64; i++ {
-			sw.Label(fmt.Sprintf("%#03o", i), "LC")
-		}
-		sw.GroupEnd()
-	}
-}
-
-func widgetBoundsBug(w *nucular.Window) {
-	w.Row(20).StaticScaled(200, 250)
-	w.Label("first", "LC")
-	w.Label("second", "LC")
-	bounds := w.WidgetBounds()
-	w.Label("third", "LC")
-	bounds2 := w.LastWidgetBounds
-	if bounds != bounds2 {
-		fmt.Printf("mismatched: %#v %#v\n", bounds, bounds2)
-	}
 }
 
 var multilineTextEditor nucular.TextEditor
