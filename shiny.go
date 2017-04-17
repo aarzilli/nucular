@@ -56,7 +56,7 @@ type MasterWindow interface {
 }
 
 type masterWindow struct {
-	Title string
+	Title  string
 	screen screen.Screen
 	wnd    screen.Window
 	wndb   screen.Buffer
@@ -72,8 +72,8 @@ type masterWindow struct {
 	prevCmds   []command.Command
 	textbuffer bytes.Buffer
 
-	uilock  sync.Mutex
-	closing bool
+	uilock      sync.Mutex
+	closing     bool
 	focusedOnce bool
 }
 
