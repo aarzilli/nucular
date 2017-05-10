@@ -4,9 +4,9 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"runtime"
 	"time"
 	"unicode"
-	"runtime"
 
 	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/mouse"
@@ -1308,7 +1308,7 @@ func (ed *TextEditor) doEdit(bounds rect.Rect, style *nstyle.Edit, inp *Input) (
 		copy := false
 		cut := false
 		paste := false
-		
+
 		clipboardModifier := key.ModControl
 		if runtime.GOOS == "darwin" {
 			clipboardModifier = key.ModMeta
