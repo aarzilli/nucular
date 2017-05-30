@@ -15,12 +15,17 @@ func GroupListStart(w *Window, num int, name string, flags WindowFlags) (GroupLi
 	gl.w = w.GroupBegin(name, flags)
 	gl.num = num
 	gl.idx = -1
-	gl.scrollbary = gl.w.Scrollbar.Y
+	if gl.w != nil {
+		gl.scrollbary = gl.w.Scrollbar.Y
+	}
 
 	return gl, gl.w
 }
 
 func (gl *GroupList) Next() bool {
+	if gl.w == nil {
+		return false
+	}
 	gl.idx++
 	if gl.idx >= gl.num {
 		if !gl.done {
