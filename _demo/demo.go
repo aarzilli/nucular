@@ -14,6 +14,8 @@ import (
 	"github.com/aarzilli/nucular/label"
 	"github.com/aarzilli/nucular/rect"
 	nstyle "github.com/aarzilli/nucular/style"
+
+	"golang.org/x/mobile/event/key"
 )
 
 var whichdemo int = 4
@@ -77,6 +79,8 @@ func main() {
 		wnd = nucular.NewMasterWindow(nucular.WindowNoScrollbar, "Split panel demo", pd.Update)
 	case 9:
 		wnd = nucular.NewMasterWindow(nucular.WindowNoScrollbar, "Nested menu demo", nestedMenu)
+	case 10:
+		wnd = nucular.NewMasterWindow(nucular.WindowNoScrollbar, "List", listDemo)
 	}
 	wnd.SetStyle(nstyle.FromTheme(theme, scaling))
 	wnd.Main()
@@ -233,4 +237,42 @@ func nestedMenu(w *nucular.Window) {
 			})
 		}
 	})
+}
+
+var listDemoSelected = -1
+
+func listDemo(w *nucular.Window) {
+	const N = 100
+	recenter := false
+	for _, e := range w.Input().Keyboard.Keys {
+		switch e.Code {
+		case key.CodeDownArrow:
+			listDemoSelected++
+			if listDemoSelected >= N {
+				listDemoSelected = N - 1
+			}
+			recenter = true
+		case key.CodeUpArrow:
+			listDemoSelected--
+			if listDemoSelected < -1 {
+				listDemoSelected = -1
+			}
+			recenter = true
+		}
+	}
+	w.Row(0).Dynamic(1)
+	if gl, w := nucular.GroupListStart(w, N, "list", nucular.WindowNoHScrollbar); w != nil {
+		w.Row(20).Dynamic(1)
+		for gl.Next() {
+			i := gl.Index()
+			selected := i == listDemoSelected
+			w.SelectableLabel(fmt.Sprintf("label %d", i), "LC", &selected)
+			if selected {
+				listDemoSelected = i
+				if recenter {
+					gl.Center()
+				}
+			}
+		}
+	}
 }
