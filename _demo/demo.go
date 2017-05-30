@@ -240,6 +240,7 @@ func nestedMenu(w *nucular.Window) {
 }
 
 var listDemoSelected = -1
+var listDemoCnt = 0
 
 func listDemo(w *nucular.Window) {
 	const N = 100
@@ -262,8 +263,13 @@ func listDemo(w *nucular.Window) {
 	}
 	w.Row(0).Dynamic(1)
 	if gl, w := nucular.GroupListStart(w, N, "list", nucular.WindowNoHScrollbar); w != nil {
+		if !recenter {
+			gl.SkipToVisible(20)
+		}
 		w.Row(20).Dynamic(1)
+		cnt := 0
 		for gl.Next() {
+			cnt++
 			i := gl.Index()
 			selected := i == listDemoSelected
 			w.SelectableLabel(fmt.Sprintf("label %d", i), "LC", &selected)
@@ -273,6 +279,10 @@ func listDemo(w *nucular.Window) {
 					gl.Center()
 				}
 			}
+		}
+		if cnt != listDemoCnt {
+			listDemoCnt = cnt
+			fmt.Printf("called %d times\n", listDemoCnt)
 		}
 	}
 }
