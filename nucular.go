@@ -2545,7 +2545,7 @@ func (win *Window) doProperty(property rect.Rect, name string, text string, filt
 		ed.Cursor = len(ed.Buffer)
 	}
 	ed.Flags = EditAlwaysInsertMode | EditNoHorizontalScroll
-	ed.doEdit(edit, &style.Edit, in)
+	ed.doEdit(edit, &style.Edit, in, false, false, false)
 	active = ed.Active
 
 	if active && in.Keyboard.Pressed(key.CodeReturnEnter) {
