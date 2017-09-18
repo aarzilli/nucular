@@ -128,16 +128,14 @@ const (
 	WindowMovable
 	WindowScalable
 	WindowClosable
-	WindowMinimizable
 	WindowDynamic
 	WindowNoScrollbar
 	WindowNoHScrollbar
 	WindowTitle
 	WindowContextualReplace
+	WindowNonmodal
 
 	windowPrivate
-	windowHidden
-	windowMinimized
 	windowSub
 	windowGroup
 	windowPopup
@@ -148,8 +146,9 @@ const (
 	windowTooltip
 	windowEnabled
 	windowHDynamic
+	windowDocked
 
-	WindowDefaultFlags = WindowBorder | WindowMovable | WindowScalable | WindowClosable | WindowMinimizable | WindowTitle
+	WindowDefaultFlags = WindowBorder | WindowMovable | WindowScalable | WindowClosable | WindowTitle
 )
 
 func createTreeNode(initialState bool, parent *treeNode) *treeNode {
@@ -212,7 +211,7 @@ func (win *Window) style() *nstyle.Window {
 	}
 }
 
-func panelBegin(ctx *context, win *Window, title string) bool {
+func panelBegin(ctx *context, win *Window, title string) {
 	win.usingSub = false
 	style := &ctx.Style
 	font := style.Font
@@ -228,10 +227,6 @@ func panelBegin(ctx *context, win *Window, title string) bool {
 
 	/* check arguments */
 	*layout = panel{}
-
-	if win.flags&windowHidden != 0 {
-		return false
-	}
 
 	/* window dragging */
 	if (win.flags&WindowMovable != 0) && win.toplevel() {
@@ -291,10 +286,7 @@ func panelBegin(ctx *context, win *Window, title string) bool {
 	}
 
 	/* calculate window header */
-	if win.flags&windowMinimized != 0 {
-		layout.HeaderH = 0
-		layout.Row.Height = 0
-	} else if win.flags&windowMenu != 0 || win.flags&windowContextual != 0 {
+	if win.flags&windowMenu != 0 || win.flags&windowContextual != 0 {
 		layout.HeaderH = window_padding.Y
 		layout.Row.Height = window_padding.Y
 	} else {
@@ -320,7 +312,6 @@ func panelBegin(ctx *context, win *Window, title string) bool {
 	header_active := (win.idx != 0) && (win.flags&WindowTitle != 0)
 
 	var dwh drawableWindowHeader
-	dwh.Minimized = layout.Flags&windowMinimized != 0
 	dwh.Dynamic = layout.Flags&WindowDynamic != 0
 	dwh.Bounds = layout.Bounds
 	dwh.HeaderActive = header_active
@@ -379,37 +370,7 @@ func panelBegin(ctx *context, win *Window, title string) bool {
 			}
 
 			if doButton(win, label.S(wstyle.Header.CloseSymbol), button, &wstyle.Header.CloseButton, in, false) {
-				layout.Flags |= windowHidden
-			}
-		}
-
-		/* window minimize button */
-		if win.flags&WindowMinimizable != 0 {
-			if wstyle.Header.Align == nstyle.HeaderRight {
-				button.X = (header.W + header.X) - button.W
-				if win.flags&WindowClosable == 0 {
-					button.X -= wstyle.Header.Padding.X
-					header.W -= wstyle.Header.Padding.X
-				}
-
-				header.W -= button.W + wstyle.Header.Spacing.X
-			} else {
-				button.X = header.X
-				header.X += button.W + wstyle.Header.Spacing.X + wstyle.Header.Padding.X
-			}
-
-			var symbolType label.SymbolType
-			if layout.Flags&windowMinimized != 0 {
-				symbolType = wstyle.Header.MaximizeSymbol
-			} else {
-				symbolType = wstyle.Header.MinimizeSymbol
-			}
-			if doButton(win, label.S(symbolType), button, &wstyle.Header.MinimizeButton, in, false) {
-				if layout.Flags&windowMinimized != 0 {
-					layout.Flags = layout.Flags & ^windowMinimized
-				} else {
-					layout.Flags = layout.Flags | windowMinimized
-				}
+				win.close = true
 			}
 		}
 	} else {
@@ -419,20 +380,10 @@ func panelBegin(ctx *context, win *Window, title string) bool {
 		dwh.Draw(&win.ctx.Style, &win.cmds)
 	}
 
-	/* fix header height for transition between minimized and maximized window state */
-	if win.flags&windowMinimized != 0 && layout.Flags&windowMinimized == 0 {
-		layout.Row.Height += 2*item_spacing.Y + wstyle.Border
-	}
-
 	var dwb drawableWindowBody
 
 	dwb.NoScrollbar = win.flags&WindowNoScrollbar != 0
 	dwb.Style = win.style()
-
-	if dwh.Minimized {
-		/* draw window background if minimized */
-		layout.Row.Height = 0
-	}
 
 	/* calculate and set the window clipping rectangle*/
 	if win.flags&WindowDynamic == 0 {
@@ -464,8 +415,6 @@ func panelBegin(ctx *context, win *Window, title string) bool {
 	dwb.Draw(&win.ctx.Style, &win.cmds)
 
 	layout.Row.Type = layoutInvalid
-
-	return layout.Flags&windowHidden == 0 && layout.Flags&windowMinimized == 0
 }
 
 func (win *Window) specialPanelBegin() {
@@ -526,9 +475,7 @@ func (win *Window) specialPanelBegin() {
 	if win.flags&windowPopup != 0 {
 		win.cmds.PushScissor(nk_null_rect)
 
-		if !panelBegin(ctx, win, win.title) {
-			win.close = true
-		}
+		panelBegin(ctx, win, win.title)
 		win.layout.Offset = &win.Scrollbar
 	}
 
@@ -569,7 +516,7 @@ func panelEnd(ctx *context, window *Window) {
 	layout.AtY += layout.Row.Height
 
 	/* draw footer and fill empty spaces inside a dynamically growing panel */
-	if layout.Flags&WindowDynamic != 0 && layout.Flags&windowMinimized == 0 {
+	if layout.Flags&WindowDynamic != 0 {
 		layout.Height = layout.AtY - layout.Bounds.Y
 		layout.Height = min(layout.Height, layout.Bounds.H)
 
@@ -629,7 +576,7 @@ func panelEnd(ctx *context, window *Window) {
 	}
 
 	/* scrollbars */
-	if layout.Flags&WindowNoScrollbar == 0 && layout.Flags&windowMinimized == 0 {
+	if layout.Flags&WindowNoScrollbar == 0 {
 		var bounds rect.Rect
 		var scroll_target float64
 		var scroll_offset float64
@@ -690,17 +637,23 @@ func panelEnd(ctx *context, window *Window) {
 	dsab.HeaderH = layout.HeaderH
 
 	/* scaler */
-	if (layout.Flags&WindowScalable != 0) && layout.Flags&windowMinimized == 0 {
+	if layout.Flags&WindowScalable != 0 {
 		dsab.DrawScaler = true
 
-		dsab.ScalerRect.W = max(0, scaler_size.X-window_padding.X)
-		dsab.ScalerRect.H = max(0, scaler_size.Y-window_padding.Y)
+		dsab.ScalerRect.W = max(0, scaler_size.X)
+		dsab.ScalerRect.H = max(0, scaler_size.Y)
 		dsab.ScalerRect.X = (layout.Bounds.X + layout.Bounds.W) - (window_padding.X + dsab.ScalerRect.W)
 		/* calculate scaler bounds */
 		if layout.Flags&WindowDynamic != 0 {
 			dsab.ScalerRect.Y = footer.Y + layout.FooterH - scaler_size.Y
 		} else {
-			dsab.ScalerRect.Y = layout.Bounds.Y + layout.Bounds.H - scaler_size.Y
+			dsab.ScalerRect.Y = layout.Bounds.Y + layout.Bounds.H - (scaler_size.Y + window_padding.Y)
+		}
+
+		scalingRect := dsab.ScalerRect
+		if layout.Flags&windowDocked != 0 {
+			scalingRect = layout.Bounds
+			scalingRect.Y = dsab.ScalerRect.Y
 		}
 
 		/* do window scaling logic */
@@ -708,7 +661,7 @@ func panelEnd(ctx *context, window *Window) {
 			prev := in.Mouse.Prev
 			window_size := wstyle.MinSize
 
-			incursor := dsab.ScalerRect.Contains(prev)
+			incursor := scalingRect.Contains(prev)
 
 			if in != nil && in.Mouse.Down(mouse.ButtonLeft) && incursor {
 				window.Bounds.W = max(window_size.X, window.Bounds.W+in.Mouse.Delta.X)
@@ -725,9 +678,7 @@ func panelEnd(ctx *context, window *Window) {
 	if layout.Flags&WindowBorder != 0 {
 		dsab.DrawBorders = true
 
-		if layout.Flags&windowMinimized != 0 {
-			dsab.PaddingY = 2.0*wstyle.Border + window.Bounds.Y + layout.HeaderH
-		} else if layout.Flags&WindowDynamic != 0 {
+		if layout.Flags&WindowDynamic != 0 {
 			dsab.PaddingY = layout.FooterH + footer.Y
 		} else {
 			dsab.PaddingY = layout.Bounds.Y + layout.Bounds.H
@@ -744,13 +695,6 @@ func panelEnd(ctx *context, window *Window) {
 	window.widgets.Add(nstyle.WidgetStateInactive, dsab.Bounds)
 	dsab.Draw(&window.ctx.Style, &window.cmds)
 
-	if window.flags&windowSub == 0 {
-		if layout.Flags&windowHidden != 0 {
-			/* window is hidden so clear command buffer  */
-			window.widgets.reset()
-		}
-	}
-
 	layout.Flags |= windowEnabled
 	window.flags = layout.Flags
 
@@ -764,9 +708,6 @@ func panelEnd(ctx *context, window *Window) {
 // Remember to call MenubarEnd when you are done adding elements to the menubar.
 func (win *Window) MenubarBegin() {
 	layout := win.layout
-	if layout.Flags&windowHidden != 0 || layout.Flags&windowMinimized != 0 {
-		return
-	}
 
 	layout.Menu.X = layout.AtX
 	layout.Menu.Y = layout.Bounds.Y + layout.HeaderH
@@ -778,9 +719,6 @@ func (win *Window) MenubarBegin() {
 // MenubarEnd signals that all widgets have been added to the menubar.
 func (win *Window) MenubarEnd() {
 	layout := win.layout
-	if layout.Flags&windowHidden != 0 || layout.Flags&windowMinimized != 0 {
-		return
-	}
 
 	layout.Menu.H = layout.AtY - layout.Menu.Y
 	layout.Clip.Y = layout.Bounds.Y + layout.HeaderH + layout.Menu.H + layout.Row.Height
@@ -866,7 +804,16 @@ func panelLayout(ctx *context, win *Window, height int, cols int, cnt int) {
 
 	if height == 0 {
 		height = layout.Clip.H - (layout.AtY - layout.Bounds.Y)
-		height -= layout.Row.Height
+		subtractHeight := true
+		if layout.Row.Columns > 0 && layout.Row.Index >= layout.Row.Columns {
+			subtractHeight = false
+		}
+		if layout.Row.Index == 0 {
+			subtractHeight = false
+		}
+		if subtractHeight {
+			height -= layout.Row.Height
+		}
 		if layout.ReservedHeight > 0 {
 			height -= layout.ReservedHeight + item_spacing.Y
 		}
@@ -2681,9 +2628,27 @@ func (ctx *context) popupOpen(title string, flags WindowFlags, rect rect.Rect, s
 		rect.H = ctx.scale(rect.H)
 	}
 
+	if rect.X == 0 && rect.Y == 0 && flags&WindowNonmodal != 0 {
+		rect.X, rect.Y = ctx.autoPosition()
+	}
+
 	popup.Bounds = rect
 	popup.layout = &panel{}
 	popup.flags = flags | WindowBorder | windowSub | windowPopup
+}
+
+func (ctx *context) autoPosition() (int, int) {
+	x, y := ctx.autopos.X, ctx.autopos.Y
+
+	ctx.autopos.X += ctx.scale(20)
+	ctx.autopos.Y += ctx.scale(20)
+
+	if ctx.autopos.X >= ctx.Windows[0].Bounds.W || ctx.autopos.Y >= ctx.Windows[0].Bounds.H {
+		ctx.autopos.X = 0
+		ctx.autopos.Y = 0
+	}
+
+	return x, y
 }
 
 // Programmatically closes this window

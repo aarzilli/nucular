@@ -113,7 +113,6 @@ func newOverviewDemo() (od *overviewDemo) {
 	od.Resize = true
 	od.Movable = true
 	od.NoScrollbar = false
-	od.Minimizable = true
 	od.Close = true
 	od.HeaderAlign = nstyle.HeaderRight
 	od.Mprog = 60
@@ -232,7 +231,6 @@ func (od *overviewDemo) overviewDemo(w *nucular.Window) {
 		w.CheckboxText("Resizable", &od.Resize)
 		w.CheckboxText("Movable", &od.Movable)
 		w.CheckboxText("No Scrollbars", &od.NoScrollbar)
-		w.CheckboxText("Minimizable", &od.Minimizable)
 		w.CheckboxText("Closable", &od.Close)
 		w.TreePop()
 	}
@@ -1054,9 +1052,6 @@ func (od *overviewDemo) showAppAbout(mw nucular.MasterWindow) {
 	}
 	if od.NoScrollbar {
 		wf |= nucular.WindowNoScrollbar
-	}
-	if od.Minimizable {
-		wf |= nucular.WindowMinimizable
 	}
 	if od.Close {
 		wf |= nucular.WindowClosable

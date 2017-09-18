@@ -18,16 +18,63 @@ import (
 	"golang.org/x/mobile/event/key"
 )
 
-var whichdemo int = 4
-
 const dotrace = false
 const scaling = 1.8
 
 //var theme nucular.Theme = nucular.WhiteTheme
 var theme nstyle.Theme = nstyle.DarkTheme
 
+func id(fn func (*nucular.Window)) func () func(*nucular.Window) {
+	return func() func(*nucular.Window) {
+		return fn
+	}
+}
+
+type Demo struct {
+	Name string
+	Title string
+	Flags nucular.WindowFlags
+	UpdateFn func() func(*nucular.Window)
+}
+
+var demos = []Demo{
+	{ "button", "Button Demo", 0, id(buttonDemo) },
+	{ "basic", "Basic Demo", 0, func() func(*nucular.Window) {
+		go func() {
+			for {
+				time.Sleep(1 * time.Second)
+				if Wnd.Closed() {
+					break
+				}
+				Wnd.Changed()
+			}
+		}()
+		return basicDemo
+	} },
+	{ "basic2", "Text Editor Demo", 0, textEditorDemo },
+	{ "calc", "Calculator Demo", 0, func() func(*nucular.Window) {
+		var cd calcDemo
+		cd.current = &cd.a
+		return cd.calculatorDemo
+	} },
+	{ "overview", "Overview", 0, func() func(*nucular.Window) {
+		od := newOverviewDemo()
+		od.Theme = theme
+		return od.overviewDemo
+	} },
+	{ "editor", "Multiline Text Editor", nucular.WindowNoScrollbar, multilineTextEditorDemo },
+	{ "split", "Split panel demo", nucular.WindowNoScrollbar, func() func(*nucular.Window) {
+		pd := &panelDebug{}
+		pd.Init()
+		return pd.Update
+	} },
+	{ "nestedmenu", "Nested menu demo", 0, id(nestedMenu) },
+	{ "list", "List", nucular.WindowNoScrollbar, id(listDemo) },
+}
+
+var Wnd nucular.MasterWindow
+
 func main() {
-	var wnd nucular.MasterWindow
 
 	if dotrace {
 		fh, _ := os.Create("demo.trace.out")
@@ -42,48 +89,35 @@ func main() {
 			defer pprof.StopCPUProfile()
 		}
 	}
-
-	switch whichdemo {
-	case 0:
-		wnd = nucular.NewMasterWindow(0, "Button Demo", buttonDemo)
-	case 1:
-		wnd = nucular.NewMasterWindow(0, "Basic Demo", basicDemo)
-		go func() {
-			for {
-				time.Sleep(1 * time.Second)
-				if wnd.Closed() {
-					break
-				}
-				wnd.Changed()
-			}
-		}()
-	case 2:
-		textEditorEditor.Flags = nucular.EditSelectable
-		textEditorEditor.Buffer = []rune("prova")
-		wnd = nucular.NewMasterWindow(0, "Text Editor Demo", textEditorDemo)
-	case 3:
-		var cd calcDemo
-		cd.current = &cd.a
-		wnd = nucular.NewMasterWindow(0, "Calculator Demo", cd.calculatorDemo)
-	case 4:
-		od := newOverviewDemo()
-		od.Theme = theme
-		wnd = nucular.NewMasterWindow(0, "Overview", od.overviewDemo)
-	case 7:
-		bs, _ := ioutil.ReadFile("overview.go")
-		multilineTextEditor.Buffer = []rune(string(bs))
-		wnd = nucular.NewMasterWindow(nucular.WindowNoScrollbar, "Multiline Text Editor", multilineTextEditorDemo)
-	case 8:
-		pd := &panelDebug{}
-		pd.Init()
-		wnd = nucular.NewMasterWindow(nucular.WindowNoScrollbar, "Split panel demo", pd.Update)
-	case 9:
-		wnd = nucular.NewMasterWindow(nucular.WindowNoScrollbar, "Nested menu demo", nestedMenu)
-	case 10:
-		wnd = nucular.NewMasterWindow(nucular.WindowNoScrollbar, "List", listDemo)
+	
+	whichdemo := ""
+	if len(os.Args) > 1 {
+		whichdemo = os.Args[1]
 	}
-	wnd.SetStyle(nstyle.FromTheme(theme, scaling))
-	wnd.Main()
+	
+	switch whichdemo {
+	case "multi", "":
+		Wnd = nucular.NewMasterWindow(0, "Multiwindow Demo", func(w *nucular.Window) {})
+		Wnd.PopupOpen("Multiwindow Demo", nucular.WindowTitle|nucular.WindowBorder | nucular.WindowMovable | nucular.WindowScalable|nucular.WindowNonmodal, rect.Rect{ 0, 0, 400, 300 }, true, multiDemo)
+	default:
+		for i := range demos {
+			if demos[i].Name == whichdemo {
+				Wnd = nucular.NewMasterWindow(demos[i].Flags, demos[i].Title, 				demos[i].UpdateFn())
+				break
+			}
+		}
+	}
+	if Wnd == nil {
+		fmt.Fprintf(os.Stderr, "unknown demo %q\n", whichdemo)
+		fmt.Fprintf(os.Stderr, "known demos:\n")
+		for i := range demos {
+			fmt.Fprintf(os.Stderr, "\t%s\n", demos[i].Name)
+		}
+		os.Exit(1)
+	}
+	
+	Wnd.SetStyle(nstyle.FromTheme(theme, scaling))
+	Wnd.Main()
 	if dotrace {
 		fh, _ := os.Create("demo.heap.pprof")
 		if fh != nil {
@@ -132,20 +166,27 @@ func basicDemo(w *nucular.Window) {
 	w.PropertyInt("Compression:", 0, &compression, 100, 10, 1)
 }
 
-var textEditorEditor nucular.TextEditor
 
-func textEditorDemo(w *nucular.Window) {
-	w.Row(30).Dynamic(1)
-	textEditorEditor.Maxlen = 30
-	textEditorEditor.Edit(w)
+func textEditorDemo() func(w *nucular.Window) {
+	var textEditorEditor nucular.TextEditor
+	textEditorEditor.Flags = nucular.EditSelectable
+	textEditorEditor.Buffer = []rune("prova")
+	return func (w *nucular.Window) {
+		w.Row(30).Dynamic(1)
+		textEditorEditor.Maxlen = 30
+		textEditorEditor.Edit(w)
+	}
 }
 
-var multilineTextEditor nucular.TextEditor
-
-func multilineTextEditorDemo(w *nucular.Window) {
-	w.Row(0).Dynamic(1)
-	multilineTextEditor.Flags = nucular.EditMultiline | nucular.EditSelectable | nucular.EditClipboard
-	multilineTextEditor.Edit(w)
+func multilineTextEditorDemo() func(w *nucular.Window) {
+	var multilineTextEditor nucular.TextEditor
+	bs, _ := ioutil.ReadFile("overview.go")
+	multilineTextEditor.Buffer = []rune(string(bs))
+	return func(w *nucular.Window) {
+		w.Row(0).Dynamic(1)
+		multilineTextEditor.Flags = nucular.EditMultiline | nucular.EditSelectable | nucular.EditClipboard
+		multilineTextEditor.Edit(w)
+	}
 }
 
 type panelDebug struct {
@@ -283,6 +324,20 @@ func listDemo(w *nucular.Window) {
 		if cnt != listDemoCnt {
 			listDemoCnt = cnt
 			fmt.Printf("called %d times\n", listDemoCnt)
+		}
+	}
+}
+
+func multiDemo(w *nucular.Window) {
+	w.Row(20).Dynamic(1)
+	w.Label("Welcome to the multi-window demo.", "LC")
+	w.Label("Open any demo window by clicking on the buttons.", "LC")
+	w.Label("To run a demo as a stand-alone window use:", "LC")
+	w.Label("     \"./demo <demo-name>\"", "LC")
+	w.Row(30).Static(100, 100, 100)
+	for i := range demos {
+		if w.ButtonText(demos[i].Name) {
+			w.Master().PopupOpen(demos[i].Title, nucular.WindowDefaultFlags|nucular.WindowNonmodal | demos[i].Flags, rect.Rect{0, 0, 200, 200}, true, demos[i].UpdateFn())
 		}
 	}
 }

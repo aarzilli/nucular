@@ -27,6 +27,7 @@ type context struct {
 	activateEditor *TextEditor
 	cmds           []command.Command
 	trashFrame     bool
+	autopos        image.Point
 }
 
 func contextAllCommands(ctx *context) {
@@ -52,6 +53,7 @@ func (ctx *context) Update() {
 		for i := 0; i < len(ctx.Windows); i++ {
 			ctx.Windows[i].began = false
 		}
+		ctx.Restack()
 		for i := 0; i < len(ctx.Windows); i++ { // this must not use range or tooltips won't work
 			win := ctx.Windows[i]
 			if win.updateFn != nil {
@@ -123,6 +125,56 @@ func (ctx *context) Reset() {
 	in.Mouse.Prev.Y = in.Mouse.Pos.Y
 	in.Mouse.Delta = image.Point{}
 	in.Keyboard.Keys = in.Keyboard.Keys[0:0]
+}
+
+func (ctx *context) Restack() {
+	nonmodalToplevel := false
+	var toplevelIdx int
+	for i := len(ctx.Windows) - 1; i >= 0; i-- {
+		if ctx.Windows[i].flags&windowTooltip == 0 {
+			toplevelIdx = i
+			nonmodalToplevel = ctx.Windows[i].flags&WindowNonmodal != 0
+			break
+		}
+	}
+	if !nonmodalToplevel {
+		return
+	}
+	// toplevel window is non-modal, proceed to change the stacking order if
+	// the user clicked outside of it
+	restacked := false
+	for i := len(ctx.Windows) - 1; i > 0; i-- {
+		if ctx.Windows[i].flags&windowTooltip != 0 {
+			continue
+		}
+		if ctx.restackClick(i) {
+			if toplevelIdx != i {
+				newToplevel := ctx.Windows[i]
+				copy(ctx.Windows[i:toplevelIdx], ctx.Windows[i+1:toplevelIdx+1])
+				ctx.Windows[toplevelIdx] = newToplevel
+				restacked = true
+			}
+			break
+		}
+	}
+	if restacked {
+		for i := range ctx.Windows {
+			ctx.Windows[i].idx = i
+		}
+	}
+}
+
+func (ctx *context) restackClick(i int) bool {
+	if !ctx.Input.Mouse.valid {
+		return false
+	}
+	for _, b := range []mouse.Button{mouse.ButtonLeft, mouse.ButtonRight, mouse.ButtonMiddle} {
+		btn := ctx.Input.Mouse.Buttons[b]
+		if btn.Clicked && btn.Down && ctx.Windows[i].Bounds.Contains(btn.ClickedPos) {
+			return true
+		}
+	}
+	return false
 }
 
 var cnt = 0

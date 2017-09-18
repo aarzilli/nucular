@@ -52,34 +52,34 @@ type Style struct {
 }
 
 type ColorTable struct {
-	ColorText color.RGBA
-	ColorWindow color.RGBA
-	ColorHeader color.RGBA
-	ColorBorder color.RGBA
-	ColorButton color.RGBA
-	ColorButtonHover color.RGBA
-	ColorButtonActive color.RGBA
-	ColorToggle color.RGBA
-	ColorToggleHover color.RGBA
-	ColorToggleCursor color.RGBA
-	ColorSelect color.RGBA
-	ColorSelectActive color.RGBA
-	ColorSlider color.RGBA
-	ColorSliderCursor color.RGBA
-	ColorSliderCursorHover color.RGBA
-	ColorSliderCursorActive color.RGBA
-	ColorProperty color.RGBA
-	ColorEdit color.RGBA
-	ColorEditCursor color.RGBA
-	ColorCombo color.RGBA
-	ColorChart color.RGBA
-	ColorChartColor color.RGBA
-	ColorChartColorHighlight color.RGBA
-	ColorScrollbar color.RGBA
-	ColorScrollbarCursor color.RGBA
-	ColorScrollbarCursorHover color.RGBA
+	ColorText                  color.RGBA
+	ColorWindow                color.RGBA
+	ColorHeader                color.RGBA
+	ColorBorder                color.RGBA
+	ColorButton                color.RGBA
+	ColorButtonHover           color.RGBA
+	ColorButtonActive          color.RGBA
+	ColorToggle                color.RGBA
+	ColorToggleHover           color.RGBA
+	ColorToggleCursor          color.RGBA
+	ColorSelect                color.RGBA
+	ColorSelectActive          color.RGBA
+	ColorSlider                color.RGBA
+	ColorSliderCursor          color.RGBA
+	ColorSliderCursorHover     color.RGBA
+	ColorSliderCursorActive    color.RGBA
+	ColorProperty              color.RGBA
+	ColorEdit                  color.RGBA
+	ColorEditCursor            color.RGBA
+	ColorCombo                 color.RGBA
+	ColorChart                 color.RGBA
+	ColorChartColor            color.RGBA
+	ColorChartColorHighlight   color.RGBA
+	ColorScrollbar             color.RGBA
+	ColorScrollbarCursor       color.RGBA
+	ColorScrollbarCursorHover  color.RGBA
 	ColorScrollbarCursorActive color.RGBA
-	ColorTabHeader color.RGBA
+	ColorTabHeader             color.RGBA
 }
 
 type ItemType int
@@ -105,22 +105,22 @@ type Text struct {
 }
 
 type Button struct {
-	Normal         Item
-	Hover          Item
-	Active         Item
-	BorderColor    color.RGBA
-	TextBackground color.RGBA
-	TextNormal     color.RGBA
-	TextHover      color.RGBA
-	TextActive     color.RGBA
-	Border         int
-	Rounding       uint16
-	Padding        image.Point
-	ImagePadding   image.Point
-	TouchPadding   image.Point
-	DrawBegin      func(*command.Buffer)
-	Draw           CustomButtonDrawing
-	DrawEnd        func(*command.Buffer)
+	Normal            Item
+	Hover             Item
+	Active            Item
+	BorderColor       color.RGBA
+	TextBackground    color.RGBA
+	TextNormal        color.RGBA
+	TextHover         color.RGBA
+	TextActive        color.RGBA
+	Border            int
+	Rounding          uint16
+	Padding           image.Point
+	ImagePadding      image.Point
+	TouchPadding      image.Point
+	DrawBegin         func(*command.Buffer)
+	Draw              CustomButtonDrawing
+	DrawEnd           func(*command.Buffer)
 	SymbolBorderWidth int
 }
 
@@ -812,8 +812,8 @@ func FromTable(table ColorTable, scaling float64) *Style {
 	win.Header.LabelNormal = table.ColorText
 	win.Header.LabelHover = table.ColorText
 	win.Header.LabelActive = table.ColorText
-	win.Header.LabelPadding = image.Point{4, 4}
-	win.Header.Padding = image.Point{4, 4}
+	win.Header.LabelPadding = image.Point{2, 2}
+	win.Header.Padding = image.Point{2, 2}
 	win.Header.Spacing = image.Point{0, 0}
 
 	/* window header close button */
@@ -863,7 +863,7 @@ func FromTable(table ColorTable, scaling float64) *Style {
 	win.Scaler = MakeItemColor(table.ColorText)
 	win.FooterPadding = image.Point{0, 0}
 	win.Rounding = 0.0
-	win.ScalerSize = image.Point{16, 16}
+	win.ScalerSize = image.Point{9, 9}
 	win.Padding = image.Point{4, 4}
 	win.Spacing = image.Point{4, 4}
 	win.ScrollbarSize = image.Point{10, 10}
@@ -931,96 +931,96 @@ const (
 )
 
 var whiteThemeTable = ColorTable{
-	ColorText: color.RGBA{70, 70, 70, 255},
-	ColorWindow: color.RGBA{175, 175, 175, 255},
-	ColorHeader: color.RGBA{175, 175, 175, 255},
-	ColorBorder: color.RGBA{0, 0, 0, 255},
-	ColorButton: color.RGBA{185, 185, 185, 255},
-	ColorButtonHover: color.RGBA{170, 170, 170, 255},
-	ColorButtonActive: color.RGBA{160, 160, 160, 255},
-	ColorToggle: color.RGBA{150, 150, 150, 255},
-	ColorToggleHover: color.RGBA{120, 120, 120, 255},
-	ColorToggleCursor: color.RGBA{175, 175, 175, 255},
-	ColorSelect: color.RGBA{175, 175, 175, 255},
-	ColorSelectActive: color.RGBA{190, 190, 190, 255},
-	ColorSlider: color.RGBA{190, 190, 190, 255},
-	ColorSliderCursor: color.RGBA{80, 80, 80, 255},
-	ColorSliderCursorHover: color.RGBA{70, 70, 70, 255},
-	ColorSliderCursorActive: color.RGBA{60, 60, 60, 255},
-	ColorProperty: color.RGBA{175, 175, 175, 255},
-	ColorEdit: color.RGBA{150, 150, 150, 255},
-	ColorEditCursor: color.RGBA{0, 0, 0, 255},
-	ColorCombo: color.RGBA{175, 175, 175, 255},
-	ColorChart: color.RGBA{160, 160, 160, 255},
-	ColorChartColor: color.RGBA{45, 45, 45, 255},
-	ColorChartColorHighlight: color.RGBA{255, 0, 0, 255},
-	ColorScrollbar: color.RGBA{180, 180, 180, 255},
-	ColorScrollbarCursor: color.RGBA{140, 140, 140, 255},
-	ColorScrollbarCursorHover: color.RGBA{150, 150, 150, 255},
+	ColorText:                  color.RGBA{70, 70, 70, 255},
+	ColorWindow:                color.RGBA{175, 175, 175, 255},
+	ColorHeader:                color.RGBA{175, 175, 175, 255},
+	ColorBorder:                color.RGBA{0, 0, 0, 255},
+	ColorButton:                color.RGBA{185, 185, 185, 255},
+	ColorButtonHover:           color.RGBA{170, 170, 170, 255},
+	ColorButtonActive:          color.RGBA{160, 160, 160, 255},
+	ColorToggle:                color.RGBA{150, 150, 150, 255},
+	ColorToggleHover:           color.RGBA{120, 120, 120, 255},
+	ColorToggleCursor:          color.RGBA{175, 175, 175, 255},
+	ColorSelect:                color.RGBA{175, 175, 175, 255},
+	ColorSelectActive:          color.RGBA{190, 190, 190, 255},
+	ColorSlider:                color.RGBA{190, 190, 190, 255},
+	ColorSliderCursor:          color.RGBA{80, 80, 80, 255},
+	ColorSliderCursorHover:     color.RGBA{70, 70, 70, 255},
+	ColorSliderCursorActive:    color.RGBA{60, 60, 60, 255},
+	ColorProperty:              color.RGBA{175, 175, 175, 255},
+	ColorEdit:                  color.RGBA{150, 150, 150, 255},
+	ColorEditCursor:            color.RGBA{0, 0, 0, 255},
+	ColorCombo:                 color.RGBA{175, 175, 175, 255},
+	ColorChart:                 color.RGBA{160, 160, 160, 255},
+	ColorChartColor:            color.RGBA{45, 45, 45, 255},
+	ColorChartColorHighlight:   color.RGBA{255, 0, 0, 255},
+	ColorScrollbar:             color.RGBA{180, 180, 180, 255},
+	ColorScrollbarCursor:       color.RGBA{140, 140, 140, 255},
+	ColorScrollbarCursorHover:  color.RGBA{150, 150, 150, 255},
 	ColorScrollbarCursorActive: color.RGBA{160, 160, 160, 255},
-	ColorTabHeader: color.RGBA{180, 180, 180, 255},
+	ColorTabHeader:             color.RGBA{180, 180, 180, 255},
 }
 
 var redThemeTable = ColorTable{
-	ColorText: color.RGBA{190, 190, 190, 255},
-	ColorWindow: color.RGBA{30, 33, 40, 215},
-	ColorHeader: color.RGBA{181, 45, 69, 220},
-	ColorBorder: color.RGBA{51, 55, 67, 255},
-	ColorButton: color.RGBA{181, 45, 69, 255},
-	ColorButtonHover: color.RGBA{190, 50, 70, 255},
-	ColorButtonActive: color.RGBA{195, 55, 75, 255},
-	ColorToggle: color.RGBA{51, 55, 67, 255},
-	ColorToggleHover: color.RGBA{45, 60, 60, 255},
-	ColorToggleCursor: color.RGBA{181, 45, 69, 255},
-	ColorSelect: color.RGBA{51, 55, 67, 255},
-	ColorSelectActive: color.RGBA{181, 45, 69, 255},
-	ColorSlider: color.RGBA{51, 55, 67, 255},
-	ColorSliderCursor: color.RGBA{181, 45, 69, 255},
-	ColorSliderCursorHover: color.RGBA{186, 50, 74, 255},
-	ColorSliderCursorActive: color.RGBA{191, 55, 79, 255},
-	ColorProperty: color.RGBA{51, 55, 67, 255},
-	ColorEdit: color.RGBA{51, 55, 67, 225},
-	ColorEditCursor: color.RGBA{190, 190, 190, 255},
-	ColorCombo: color.RGBA{51, 55, 67, 255},
-	ColorChart: color.RGBA{51, 55, 67, 255},
-	ColorChartColor: color.RGBA{170, 40, 60, 255},
-	ColorChartColorHighlight: color.RGBA{255, 0, 0, 255},
-	ColorScrollbar: color.RGBA{30, 33, 40, 255},
-	ColorScrollbarCursor: color.RGBA{64, 84, 95, 255},
-	ColorScrollbarCursorHover: color.RGBA{70, 90, 100, 255},
+	ColorText:                  color.RGBA{190, 190, 190, 255},
+	ColorWindow:                color.RGBA{30, 33, 40, 215},
+	ColorHeader:                color.RGBA{181, 45, 69, 220},
+	ColorBorder:                color.RGBA{51, 55, 67, 255},
+	ColorButton:                color.RGBA{181, 45, 69, 255},
+	ColorButtonHover:           color.RGBA{190, 50, 70, 255},
+	ColorButtonActive:          color.RGBA{195, 55, 75, 255},
+	ColorToggle:                color.RGBA{51, 55, 67, 255},
+	ColorToggleHover:           color.RGBA{45, 60, 60, 255},
+	ColorToggleCursor:          color.RGBA{181, 45, 69, 255},
+	ColorSelect:                color.RGBA{51, 55, 67, 255},
+	ColorSelectActive:          color.RGBA{181, 45, 69, 255},
+	ColorSlider:                color.RGBA{51, 55, 67, 255},
+	ColorSliderCursor:          color.RGBA{181, 45, 69, 255},
+	ColorSliderCursorHover:     color.RGBA{186, 50, 74, 255},
+	ColorSliderCursorActive:    color.RGBA{191, 55, 79, 255},
+	ColorProperty:              color.RGBA{51, 55, 67, 255},
+	ColorEdit:                  color.RGBA{51, 55, 67, 225},
+	ColorEditCursor:            color.RGBA{190, 190, 190, 255},
+	ColorCombo:                 color.RGBA{51, 55, 67, 255},
+	ColorChart:                 color.RGBA{51, 55, 67, 255},
+	ColorChartColor:            color.RGBA{170, 40, 60, 255},
+	ColorChartColorHighlight:   color.RGBA{255, 0, 0, 255},
+	ColorScrollbar:             color.RGBA{30, 33, 40, 255},
+	ColorScrollbarCursor:       color.RGBA{64, 84, 95, 255},
+	ColorScrollbarCursorHover:  color.RGBA{70, 90, 100, 255},
 	ColorScrollbarCursorActive: color.RGBA{75, 95, 105, 255},
-	ColorTabHeader: color.RGBA{181, 45, 69, 220},
+	ColorTabHeader:             color.RGBA{181, 45, 69, 220},
 }
 
 var darkThemeTable = ColorTable{
-	ColorText: color.RGBA{210, 210, 210, 255},
-	ColorWindow: color.RGBA{57, 67, 71, 255},
-	ColorHeader: color.RGBA{51, 51, 56, 220},
-	ColorBorder: color.RGBA{46, 46, 46, 255},
-	ColorButton: color.RGBA{48, 83, 111, 255},
-	ColorButtonHover: color.RGBA{58, 93, 121, 255},
-	ColorButtonActive: color.RGBA{63, 98, 126, 255},
-	ColorToggle: color.RGBA{50, 58, 61, 255},
-	ColorToggleHover: color.RGBA{45, 53, 56, 255},
-	ColorToggleCursor: color.RGBA{48, 83, 111, 255},
-	ColorSelect: color.RGBA{57, 67, 61, 255},
-	ColorSelectActive: color.RGBA{48, 83, 111, 255},
-	ColorSlider: color.RGBA{50, 58, 61, 255},
-	ColorSliderCursor: color.RGBA{48, 83, 111, 245},
-	ColorSliderCursorHover: color.RGBA{53, 88, 116, 255},
-	ColorSliderCursorActive: color.RGBA{58, 93, 121, 255},
-	ColorProperty: color.RGBA{50, 58, 61, 255},
-	ColorEdit: color.RGBA{50, 58, 61, 225},
-	ColorEditCursor: color.RGBA{210, 210, 210, 255},
-	ColorCombo: color.RGBA{50, 58, 61, 255},
-	ColorChart: color.RGBA{50, 58, 61, 255},
-	ColorChartColor: color.RGBA{48, 83, 111, 255},
-	ColorChartColorHighlight: color.RGBA{255, 0, 0, 255},
-	ColorScrollbar: color.RGBA{50, 58, 61, 255},
-	ColorScrollbarCursor: color.RGBA{48, 83, 111, 255},
-	ColorScrollbarCursorHover: color.RGBA{53, 88, 116, 255},
+	ColorText:                  color.RGBA{210, 210, 210, 255},
+	ColorWindow:                color.RGBA{57, 67, 71, 255},
+	ColorHeader:                color.RGBA{51, 51, 56, 220},
+	ColorBorder:                color.RGBA{46, 46, 46, 255},
+	ColorButton:                color.RGBA{48, 83, 111, 255},
+	ColorButtonHover:           color.RGBA{58, 93, 121, 255},
+	ColorButtonActive:          color.RGBA{63, 98, 126, 255},
+	ColorToggle:                color.RGBA{50, 58, 61, 255},
+	ColorToggleHover:           color.RGBA{45, 53, 56, 255},
+	ColorToggleCursor:          color.RGBA{48, 83, 111, 255},
+	ColorSelect:                color.RGBA{57, 67, 61, 255},
+	ColorSelectActive:          color.RGBA{48, 83, 111, 255},
+	ColorSlider:                color.RGBA{50, 58, 61, 255},
+	ColorSliderCursor:          color.RGBA{48, 83, 111, 245},
+	ColorSliderCursorHover:     color.RGBA{53, 88, 116, 255},
+	ColorSliderCursorActive:    color.RGBA{58, 93, 121, 255},
+	ColorProperty:              color.RGBA{50, 58, 61, 255},
+	ColorEdit:                  color.RGBA{50, 58, 61, 225},
+	ColorEditCursor:            color.RGBA{210, 210, 210, 255},
+	ColorCombo:                 color.RGBA{50, 58, 61, 255},
+	ColorChart:                 color.RGBA{50, 58, 61, 255},
+	ColorChartColor:            color.RGBA{48, 83, 111, 255},
+	ColorChartColorHighlight:   color.RGBA{255, 0, 0, 255},
+	ColorScrollbar:             color.RGBA{50, 58, 61, 255},
+	ColorScrollbarCursor:       color.RGBA{48, 83, 111, 255},
+	ColorScrollbarCursorHover:  color.RGBA{53, 88, 116, 255},
 	ColorScrollbarCursorActive: color.RGBA{58, 93, 121, 255},
-	ColorTabHeader: color.RGBA{48, 83, 111, 255},
+	ColorTabHeader:             color.RGBA{48, 83, 111, 255},
 }
 
 func FromTheme(theme Theme, scaling float64) *Style {
