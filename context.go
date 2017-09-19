@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aarzilli/nucular/command"
+	"github.com/aarzilli/nucular/rect"
 	nstyle "github.com/aarzilli/nucular/style"
 
 	"github.com/golang/freetype/raster"
@@ -23,17 +24,27 @@ type context struct {
 	Input          Input
 	Style          nstyle.Style
 	Windows        []*Window
+	DockedWindows  dockedTree
 	changed        int32
 	activateEditor *TextEditor
 	cmds           []command.Command
 	trashFrame     bool
 	autopos        image.Point
+
+	dockedWindowFocus int
+	dockedCnt         int
 }
 
 func contextAllCommands(ctx *context) {
 	ctx.cmds = ctx.cmds[:0]
-	for _, w := range ctx.Windows {
+	for i, w := range ctx.Windows {
 		ctx.cmds = append(ctx.cmds, w.cmds.Commands...)
+		if i == 0 {
+			ctx.DockedWindows.Walk(func(w *Window) *Window {
+				ctx.cmds = append(ctx.cmds, w.cmds.Commands...)
+				return w
+			})
+		}
 	}
 	return
 }
@@ -42,7 +53,7 @@ func (ctx *context) setupMasterWindow(layout *panel, updatefn UpdateFn) {
 	ctx.Windows = append(ctx.Windows, createWindow(ctx, ""))
 	ctx.Windows[0].idx = 0
 	ctx.Windows[0].layout = layout
-	ctx.Windows[0].flags = layout.Flags
+	ctx.Windows[0].flags = layout.Flags | WindowNonmodal
 	ctx.Windows[0].cmds.UseClipping = true
 	ctx.Windows[0].updateFn = updatefn
 }
@@ -55,23 +66,12 @@ func (ctx *context) Update() {
 		}
 		ctx.Restack()
 		for i := 0; i < len(ctx.Windows); i++ { // this must not use range or tooltips won't work
-			win := ctx.Windows[i]
-			if win.updateFn != nil {
-				win.specialPanelBegin()
-				win.updateFn(win)
-			}
-
-			if !win.began {
-				win.close = true
-				continue
-			}
-
-			if win.title == tooltipWindowTitle {
-				win.close = true
-			}
-
-			if win.flags&windowPopup != 0 {
-				panelEnd(ctx, win)
+			ctx.updateWindow(ctx.Windows[i])
+			if i == 0 {
+				t := ctx.DockedWindows.Update(ctx.Windows[0].Bounds, ctx.Style.Scaling)
+				if t != nil {
+					ctx.DockedWindows = *t
+				}
 			}
 		}
 		contextEnd(ctx)
@@ -83,6 +83,26 @@ func (ctx *context) Update() {
 	}
 }
 
+func (ctx *context) updateWindow(win *Window) {
+	if win.updateFn != nil {
+		win.specialPanelBegin()
+		win.updateFn(win)
+	}
+
+	if !win.began {
+		win.close = true
+		return
+	}
+
+	if win.title == tooltipWindowTitle {
+		win.close = true
+	}
+
+	if win.flags&windowPopup != 0 {
+		panelEnd(ctx, win)
+	}
+}
+
 func contextBegin(ctx *context, layout *panel) {
 	for _, w := range ctx.Windows {
 		w.usingSub = false
@@ -91,6 +111,14 @@ func contextBegin(ctx *context, layout *panel) {
 		w.widgets.reset()
 		w.cmds.Reset()
 	}
+	ctx.DockedWindows.Walk(func(w *Window) *Window {
+		w.usingSub = false
+		w.curNode = w.rootNode
+		w.close = false
+		w.widgets.reset()
+		w.cmds.Reset()
+		return w
+	})
 
 	ctx.trashFrame = false
 	ctx.Windows[0].layout = layout
@@ -128,6 +156,17 @@ func (ctx *context) Reset() {
 }
 
 func (ctx *context) Restack() {
+	clicked := false
+	for _, b := range []mouse.Button{mouse.ButtonLeft, mouse.ButtonRight, mouse.ButtonMiddle} {
+		if ctx.Input.Mouse.Buttons[b].Clicked && ctx.Input.Mouse.Buttons[b].Down {
+			clicked = true
+			break
+		}
+	}
+	if !clicked {
+		return
+	}
+	ctx.dockedWindowFocus = 0
 	nonmodalToplevel := false
 	var toplevelIdx int
 	for i := len(ctx.Windows) - 1; i >= 0; i-- {
@@ -143,11 +182,13 @@ func (ctx *context) Restack() {
 	// toplevel window is non-modal, proceed to change the stacking order if
 	// the user clicked outside of it
 	restacked := false
+	found := false
 	for i := len(ctx.Windows) - 1; i > 0; i-- {
 		if ctx.Windows[i].flags&windowTooltip != 0 {
 			continue
 		}
-		if ctx.restackClick(i) {
+		if ctx.restackClick(ctx.Windows[i]) {
+			found = true
 			if toplevelIdx != i {
 				newToplevel := ctx.Windows[i]
 				copy(ctx.Windows[i:toplevelIdx], ctx.Windows[i+1:toplevelIdx+1])
@@ -162,19 +203,48 @@ func (ctx *context) Restack() {
 			ctx.Windows[i].idx = i
 		}
 	}
+	if found {
+		return
+	}
+	ctx.DockedWindows.Walk(func(w *Window) *Window {
+		if ctx.restackClick(w) && (w.flags&windowDocked != 0) {
+			ctx.dockedWindowFocus = w.idx
+		}
+		return w
+	})
 }
 
-func (ctx *context) restackClick(i int) bool {
+func (ctx *context) restackClick(w *Window) bool {
 	if !ctx.Input.Mouse.valid {
 		return false
 	}
 	for _, b := range []mouse.Button{mouse.ButtonLeft, mouse.ButtonRight, mouse.ButtonMiddle} {
 		btn := ctx.Input.Mouse.Buttons[b]
-		if btn.Clicked && btn.Down && ctx.Windows[i].Bounds.Contains(btn.ClickedPos) {
+		if btn.Clicked && btn.Down && w.Bounds.Contains(btn.ClickedPos) {
 			return true
 		}
 	}
 	return false
+}
+
+func (w *masterWindow) ListWindowsData() []interface{} {
+	return w.ctx.ListWindowsData()
+}
+
+func (ctx *context) ListWindowsData() []interface{} {
+	r := []interface{}{}
+	ctx.DockedWindows.Walk(func(w *Window) *Window {
+		if w.Data != nil {
+			r = append(r, w.Data)
+		}
+		return w
+	})
+	for _, w := range ctx.Windows {
+		if w.Data != nil {
+			r = append(r, w.Data)
+		}
+	}
+	return r
 }
 
 var cnt = 0
@@ -573,4 +643,229 @@ func (r *myRGBAPainter) Paint(ss []raster.Span, done bool) {
 			}
 		}
 	}
+}
+
+type dockedNodeType uint8
+
+const (
+	dockedNodeLeaf dockedNodeType = iota
+	dockedNodeVert
+	dockedNodeHoriz
+)
+
+type dockedTree struct {
+	Type  dockedNodeType
+	Split ScalableSplit
+	Child [2]*dockedTree
+	W     *Window
+}
+
+func (t *dockedTree) Update(bounds rect.Rect, scaling float64) *dockedTree {
+	if t == nil {
+		return nil
+	}
+	switch t.Type {
+	case dockedNodeVert:
+		b0, b1, _ := t.Split.verticalnw(bounds, scaling)
+		t.Child[0] = t.Child[0].Update(b0, scaling)
+		t.Child[1] = t.Child[1].Update(b1, scaling)
+	case dockedNodeHoriz:
+		b0, b1, _ := t.Split.horizontalnw(bounds, scaling)
+		t.Child[0] = t.Child[0].Update(b0, scaling)
+		t.Child[1] = t.Child[1].Update(b1, scaling)
+	case dockedNodeLeaf:
+		if t.W != nil {
+			t.W.Bounds = bounds
+			t.W.ctx.updateWindow(t.W)
+			if t.W == nil {
+				return nil
+			}
+			if t.W.close {
+				t.W = nil
+				return nil
+			}
+			return t
+		}
+		return nil
+	}
+	if t.Child[0] == nil {
+		return t.Child[1]
+	}
+	if t.Child[1] == nil {
+		return t.Child[0]
+	}
+	return t
+}
+
+func (t *dockedTree) Walk(fn func(win *Window) *Window) {
+	if t == nil {
+		return
+	}
+	switch t.Type {
+	case dockedNodeVert, dockedNodeHoriz:
+		t.Child[0].Walk(fn)
+		t.Child[1].Walk(fn)
+	case dockedNodeLeaf:
+		if t.W != nil {
+			t.W = fn(t.W)
+		}
+	}
+}
+
+func newDockedLeaf(win *Window) *dockedTree {
+	r := &dockedTree{Type: dockedNodeLeaf, W: win}
+	r.Split.MinSize = 40
+	return r
+}
+
+func (t *dockedTree) Dock(win *Window, pos image.Point, bounds rect.Rect, scaling float64) (bool, rect.Rect) {
+	if t == nil {
+		return false, rect.Rect{}
+	}
+	switch t.Type {
+	case dockedNodeVert:
+		b0, b1, _ := t.Split.verticalnw(bounds, scaling)
+		canDock, r := t.Child[0].Dock(win, pos, b0, scaling)
+		if canDock {
+			return canDock, r
+		}
+		canDock, r = t.Child[1].Dock(win, pos, b1, scaling)
+		if canDock {
+			return canDock, r
+		}
+	case dockedNodeHoriz:
+		b0, b1, _ := t.Split.horizontalnw(bounds, scaling)
+		canDock, r := t.Child[0].Dock(win, pos, b0, scaling)
+		if canDock {
+			return canDock, r
+		}
+		canDock, r = t.Child[1].Dock(win, pos, b1, scaling)
+		if canDock {
+			return canDock, r
+		}
+	case dockedNodeLeaf:
+		v := percentages(bounds, 0.03)
+		for i := range v {
+			if v[i].Contains(pos) {
+				if t.W == nil {
+					if win != nil {
+						t.W = win
+						win.ctx.dockWindow(win)
+					}
+					return true, bounds
+				}
+				w := percentages(bounds, 0.5)
+				if win != nil {
+					if i < 2 {
+						// horizontal split
+						t.Type = dockedNodeHoriz
+						t.Split.Size = int(float64(w[0].H) / scaling)
+						t.Child[i] = newDockedLeaf(win)
+						t.Child[-i+1] = newDockedLeaf(t.W)
+					} else {
+						// vertical split
+						t.Type = dockedNodeVert
+						t.Split.Size = int(float64(w[2].W) / scaling)
+						t.Child[i-2] = newDockedLeaf(win)
+						t.Child[-(i-2)+1] = newDockedLeaf(t.W)
+					}
+
+					t.W = nil
+					win.ctx.dockWindow(win)
+				}
+				return true, w[i]
+			}
+		}
+	}
+	return false, rect.Rect{}
+}
+
+func (ctx *context) dockWindow(win *Window) {
+	win.undockedSz = image.Point{win.Bounds.W, win.Bounds.H}
+	win.flags |= windowDocked
+	win.layout.Flags |= windowDocked
+	ctx.dockedCnt--
+	win.idx = ctx.dockedCnt
+	for i := range ctx.Windows {
+		if ctx.Windows[i] == win {
+			if i+1 < len(ctx.Windows) {
+				copy(ctx.Windows[i:], ctx.Windows[i+1:])
+			}
+			ctx.Windows = ctx.Windows[:len(ctx.Windows)-1]
+			return
+		}
+	}
+}
+
+func (t *dockedTree) Undock(win *Window) {
+	t.Walk(func(w *Window) *Window {
+		if w == win {
+			return nil
+		}
+		return w
+	})
+	win.flags &= ^windowDocked
+	win.layout.Flags &= ^windowDocked
+	win.Bounds.H = win.undockedSz.Y
+	win.Bounds.W = win.undockedSz.X
+	win.idx = len(win.ctx.Windows)
+	win.ctx.Windows = append(win.ctx.Windows, win)
+}
+
+func (t *dockedTree) Scale(win *Window, delta image.Point, scaling float64) image.Point {
+	if t == nil || (delta.X == 0 && delta.Y == 0) {
+		return image.ZP
+	}
+	switch t.Type {
+	case dockedNodeVert:
+		d0 := t.Child[0].Scale(win, delta, scaling)
+		if d0.X != 0 {
+			t.Split.Size += int(float64(d0.X) / scaling)
+			if t.Split.Size <= t.Split.MinSize {
+				t.Split.Size = t.Split.MinSize
+			}
+			d0.X = 0
+		}
+		if d0 != image.ZP {
+			return d0
+		}
+		return t.Child[1].Scale(win, delta, scaling)
+	case dockedNodeHoriz:
+		d0 := t.Child[0].Scale(win, delta, scaling)
+		if d0.Y != 0 {
+			t.Split.Size += int(float64(d0.Y) / scaling)
+			if t.Split.Size <= t.Split.MinSize {
+				t.Split.Size = t.Split.MinSize
+			}
+			d0.Y = 0
+		}
+		if d0 != image.ZP {
+			return d0
+		}
+		return t.Child[1].Scale(win, delta, scaling)
+	case dockedNodeLeaf:
+		if t.W == win {
+			return delta
+		}
+	}
+	return image.ZP
+}
+
+func percentages(bounds rect.Rect, f float64) (r [4]rect.Rect) {
+	pw := int(float64(bounds.W) * f)
+	ph := int(float64(bounds.H) * f)
+	// horizontal split
+	r[0] = bounds
+	r[0].H = ph
+	r[1] = bounds
+	r[1].Y += r[1].H - ph
+	r[1].H = ph
+
+	// vertical split
+	r[2] = bounds
+	r[2].W = pw
+	r[3] = bounds
+	r[3].X += r[3].W - pw
+	r[3].W = pw
+	return
 }

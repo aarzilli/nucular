@@ -23,9 +23,11 @@ import (
 ///////////////////////////////////////////////////////////////////////////////////
 
 type UpdateFn func(*Window)
+type SaveFn func() []byte
 
 type Window struct {
 	LastWidgetBounds rect.Rect
+	Data             interface{}
 	title            string
 	ctx              *context
 	idx              int
@@ -36,6 +38,8 @@ type Window struct {
 	widgets          widgetBuffer
 	layout           *panel
 	close, first     bool
+	moving           bool
+	scaling          bool
 	// trigger rectangle of nonblocking windows
 	header rect.Rect
 	// root of the node tree
@@ -50,12 +54,14 @@ type Window struct {
 	editor *TextEditor
 	// update function
 	updateFn      UpdateFn
+	saveFn        SaveFn
 	usingSub      bool
 	began         bool
 	rowCtor       rowConstructor
 	menuItemWidth int
 	lastLayoutCnt int
 	adjust        map[int]map[int]*adjustCol
+	undockedSz    image.Point
 }
 
 type FittingWidthFn func(width int)
@@ -220,36 +226,11 @@ func panelBegin(ctx *context, win *Window, title string) {
 	layout := win.layout
 	wstyle := win.style()
 
-	/* cache style data */
 	window_padding := wstyle.Padding
 	item_spacing := wstyle.Spacing
 	scaler_size := wstyle.ScalerSize
 
-	/* check arguments */
 	*layout = panel{}
-
-	/* window dragging */
-	if (win.flags&WindowMovable != 0) && win.toplevel() {
-		var move rect.Rect
-		move.X = win.Bounds.X
-		move.Y = win.Bounds.Y
-		move.W = win.Bounds.W
-		move.H = layout.HeaderH
-
-		if win.idx != 0 {
-			move.H = FontHeight(font) + 2.0*wstyle.Header.Padding.Y
-			move.H += 2.0 * wstyle.Header.LabelPadding.Y
-		} else {
-			move.H = window_padding.Y + item_spacing.Y
-		}
-
-		incursor := in.Mouse.PrevHoveringRect(move)
-		if in.Mouse.Down(mouse.ButtonLeft) && incursor {
-			delta := in.Mouse.Delta
-			win.Bounds.X = win.Bounds.X + delta.X
-			win.Bounds.Y = win.Bounds.Y + delta.Y
-		}
-	}
 
 	/* panel space with border */
 	if win.flags&WindowBorder != 0 {
@@ -318,6 +299,8 @@ func panelBegin(ctx *context, win *Window, title string) {
 	dwh.LayoutWidth = layout.Width
 	dwh.Style = win.style()
 
+	var closeButton rect.Rect
+
 	if header_active {
 		/* calculate header bounds */
 		dwh.Header.X = layout.Bounds.X
@@ -338,14 +321,12 @@ func panelBegin(ctx *context, win *Window, title string) {
 
 		dwh.Hovered = ctx.Input.Mouse.HoveringRect(dwh.Header)
 
-		header := dwh.Header
-
 		/* window header title */
 		t := FontWidth(font, title)
 
-		dwh.Label.X = header.X + wstyle.Header.Padding.X
+		dwh.Label.X = dwh.Header.X + wstyle.Header.Padding.X
 		dwh.Label.X += wstyle.Header.LabelPadding.X
-		dwh.Label.Y = header.Y + wstyle.Header.LabelPadding.Y
+		dwh.Label.Y = dwh.Header.Y + wstyle.Header.LabelPadding.Y
 		dwh.Label.H = FontHeight(font) + 2*wstyle.Header.LabelPadding.Y
 		dwh.Label.W = t + 2*wstyle.Header.Spacing.X
 		dwh.LayoutHeaderH = layout.HeaderH
@@ -355,21 +336,20 @@ func panelBegin(ctx *context, win *Window, title string) {
 		win.widgets.Add(nstyle.WidgetStateInactive, layout.Bounds)
 		dwh.Draw(&win.ctx.Style, &win.cmds)
 
-		var button rect.Rect
-		/* window close button */
-		button.Y = header.Y + wstyle.Header.Padding.Y
-		button.H = layout.HeaderH - 2*wstyle.Header.Padding.Y
-		button.W = button.H
+		// window close button
+		closeButton.Y = dwh.Header.Y + wstyle.Header.Padding.Y
+		closeButton.H = layout.HeaderH - 2*wstyle.Header.Padding.Y
+		closeButton.W = closeButton.H
 		if win.flags&WindowClosable != 0 {
 			if wstyle.Header.Align == nstyle.HeaderRight {
-				button.X = (header.W + header.X) - (button.W + wstyle.Header.Padding.X)
-				header.W -= button.W + wstyle.Header.Spacing.X + wstyle.Header.Padding.X
+				closeButton.X = (dwh.Header.W + dwh.Header.X) - (closeButton.W + wstyle.Header.Padding.X)
+				dwh.Header.W -= closeButton.W + wstyle.Header.Spacing.X + wstyle.Header.Padding.X
 			} else {
-				button.X = header.X + wstyle.Header.Padding.X
-				header.X += button.W + wstyle.Header.Spacing.X + wstyle.Header.Padding.X
+				closeButton.X = dwh.Header.X + wstyle.Header.Padding.X
+				dwh.Header.X += closeButton.W + wstyle.Header.Spacing.X + wstyle.Header.Padding.X
 			}
 
-			if doButton(win, label.S(wstyle.Header.CloseSymbol), button, &wstyle.Header.CloseButton, in, false) {
+			if doButton(win, label.S(wstyle.Header.CloseSymbol), closeButton, &wstyle.Header.CloseButton, in, false) {
 				win.close = true
 			}
 		}
@@ -378,6 +358,28 @@ func panelBegin(ctx *context, win *Window, title string) {
 		dwh.RowHeight = layout.Row.Height
 		win.widgets.Add(nstyle.WidgetStateInactive, layout.Bounds)
 		dwh.Draw(&win.ctx.Style, &win.cmds)
+	}
+
+	// window dragging
+	if win.moving {
+		if in == nil || !in.Mouse.Down(mouse.ButtonLeft) {
+			if win.flags&windowDocked == 0 && in != nil {
+				win.ctx.DockedWindows.Dock(win, in.Mouse.Pos, win.ctx.Windows[0].Bounds, win.ctx.Style.Scaling)
+			}
+			win.moving = false
+		} else {
+			win.move(in.Mouse.Delta, in.Mouse.Pos)
+		}
+	} else if (win.flags&WindowMovable != 0) && win.toplevel() {
+		var move rect.Rect
+		move.X = win.Bounds.X
+		move.Y = win.Bounds.Y
+		move.W = win.Bounds.W
+		move.H = FontHeight(font) + 2.0*wstyle.Header.Padding.Y + 2.0*wstyle.Header.LabelPadding.Y
+
+		if in.Mouse.IsClickDownInRect(mouse.ButtonLeft, move, true) && !in.Mouse.IsClickDownInRect(mouse.ButtonLeft, closeButton, true) {
+			win.moving = true
+		}
 	}
 
 	var dwb drawableWindowBody
@@ -650,26 +652,16 @@ func panelEnd(ctx *context, window *Window) {
 			dsab.ScalerRect.Y = layout.Bounds.Y + layout.Bounds.H - (scaler_size.Y + window_padding.Y)
 		}
 
-		scalingRect := dsab.ScalerRect
-		if layout.Flags&windowDocked != 0 {
-			scalingRect = layout.Bounds
-			scalingRect.Y = dsab.ScalerRect.Y
-		}
-
 		/* do window scaling logic */
 		if window.toplevel() {
-			prev := in.Mouse.Prev
-			window_size := wstyle.MinSize
-
-			incursor := scalingRect.Contains(prev)
-
-			if in != nil && in.Mouse.Down(mouse.ButtonLeft) && incursor {
-				window.Bounds.W = max(window_size.X, window.Bounds.W+in.Mouse.Delta.X)
-
-				/* dragging in y-direction is only possible if static window */
-				if layout.Flags&WindowDynamic == 0 {
-					window.Bounds.H = max(window_size.Y, window.Bounds.H+in.Mouse.Delta.Y)
+			if window.scaling {
+				if in == nil || !in.Mouse.Down(mouse.ButtonLeft) {
+					window.scaling = false
+				} else {
+					window.scale(in.Mouse.Delta)
 				}
+			} else if in != nil && in.Mouse.IsClickDownInRect(mouse.ButtonLeft, dsab.ScalerRect, true) {
+				window.scaling = true
 			}
 		}
 	}
@@ -714,6 +706,34 @@ func (win *Window) MenubarBegin() {
 	layout.Menu.W = layout.Width
 	layout.Menu.Offset = *layout.Offset
 	layout.Offset.Y = 0
+}
+
+func (win *Window) move(delta image.Point, pos image.Point) {
+	if win.flags&windowDocked != 0 {
+		if delta.X != 0 && delta.Y != 0 {
+			win.ctx.DockedWindows.Undock(win)
+		}
+		return
+	}
+	if canDock, bounds := win.ctx.DockedWindows.Dock(nil, pos, win.ctx.Windows[0].Bounds, win.ctx.Style.Scaling); canDock {
+		win.cmds.FillRect(bounds, 0, color.RGBA{0x0, 0x0, 0x50, 0x50})
+	}
+	win.Bounds.X = win.Bounds.X + delta.X
+	win.Bounds.Y = win.Bounds.Y + delta.Y
+}
+
+func (win *Window) scale(delta image.Point) {
+	if win.flags&windowDocked != 0 {
+		win.ctx.DockedWindows.Scale(win, delta, win.ctx.Style.Scaling)
+		return
+	}
+	window_size := win.style().MinSize
+	win.Bounds.W = max(window_size.X, win.Bounds.W+delta.X)
+
+	/* dragging in y-direction is only possible if static window */
+	if win.layout.Flags&WindowDynamic == 0 {
+		win.Bounds.H = max(window_size.Y, win.Bounds.H+delta.Y)
+	}
 }
 
 // MenubarEnd signals that all widgets have been added to the menubar.
@@ -805,9 +825,6 @@ func panelLayout(ctx *context, win *Window, height int, cols int, cnt int) {
 	if height == 0 {
 		height = layout.Clip.H - (layout.AtY - layout.Bounds.Y)
 		subtractHeight := true
-		if layout.Row.Columns > 0 && layout.Row.Index >= layout.Row.Columns {
-			subtractHeight = false
-		}
 		if layout.Row.Index == 0 {
 			subtractHeight = false
 		}
@@ -1798,7 +1815,7 @@ const (
 	horizontal
 )
 
-func scrollbarBehavior(state *nstyle.WidgetStates, in *Input, scroll, cursor, scrollwheel_bounds, empty0, empty1 rect.Rect, scroll_offset float64, target float64, scroll_step float64, o orientation) float64 {
+func scrollbarBehavior(state *nstyle.WidgetStates, in *Input, scroll, cursor, empty0, empty1 rect.Rect, scroll_offset float64, target float64, scroll_step float64, o orientation) float64 {
 	exitstate := basicWidgetStateControl(state, in, cursor)
 
 	if *state == nstyle.WidgetStateActive {
@@ -1843,16 +1860,17 @@ func scrollbarBehavior(state *nstyle.WidgetStates, in *Input, scroll, cursor, sc
 		}
 	}
 
-	if o == vertical && ((in.Mouse.ScrollDelta < 0) || (in.Mouse.ScrollDelta > 0)) && in.Mouse.HoveringRect(scrollwheel_bounds) {
+	return scroll_offset
+}
+
+func scrollwheelBehavior(win *Window, scroll, scrollwheel_bounds rect.Rect, scroll_offset, target, scroll_step float64) float64 {
+	in := &win.ctx.Input
+	
+	if ((in.Mouse.ScrollDelta < 0) || (in.Mouse.ScrollDelta > 0)) && in.Mouse.HoveringRect(scrollwheel_bounds) {
 		/* update cursor by mouse scrolling */
 		old_scroll_offset := scroll_offset
 		scroll_offset = scroll_offset + scroll_step*float64(-in.Mouse.ScrollDelta)
-
-		if o == vertical {
-			scroll_offset = clampFloat(0, scroll_offset, target-float64(scroll.H))
-		} else {
-			scroll_offset = clampFloat(0, scroll_offset, target-float64(scroll.W))
-		}
+		scroll_offset = clampFloat(0, scroll_offset, target-float64(scroll.H))
 		used_delta := (scroll_offset - old_scroll_offset) / scroll_step
 		residual := float64(in.Mouse.ScrollDelta) + used_delta
 		if residual < 0 {
@@ -1861,7 +1879,6 @@ func scrollbarBehavior(state *nstyle.WidgetStates, in *Input, scroll, cursor, sc
 			in.Mouse.ScrollDelta = int(math.Floor(residual))
 		}
 	}
-
 	return scroll_offset
 }
 
@@ -1935,7 +1952,8 @@ func doScrollbarv(win *Window, scroll, scrollwheel_bounds rect.Rect, offset floa
 	/* update scrollbar */
 	out := &win.widgets
 	state := out.PrevState(scroll)
-	scroll_offset = scrollbarBehavior(&state, in, scroll, cursor, scrollwheel_bounds, emptyNorth, emptySouth, scroll_offset, target, scroll_step, vertical)
+	scroll_offset = scrollbarBehavior(&state, in, scroll, cursor, emptyNorth, emptySouth, scroll_offset, target, scroll_step, vertical)
+	scroll_offset = scrollwheelBehavior(win, scroll, scrollwheel_bounds, scroll_offset, target, scroll_step)
 
 	scroll_off = scroll_offset / target
 	cursor.Y = scroll.Y + int(scroll_off*float64(scroll.H))
@@ -2018,7 +2036,7 @@ func doScrollbarh(win *Window, scroll rect.Rect, offset float64, target float64,
 	/* update scrollbar */
 	out := &win.widgets
 	state := out.PrevState(scroll)
-	scroll_offset = scrollbarBehavior(&state, in, scroll, cursor, rect.Rect{0, 0, 0, 0}, emptyWest, emptyEast, scroll_offset, target, scroll_step, horizontal)
+	scroll_offset = scrollbarBehavior(&state, in, scroll, cursor, emptyWest, emptyEast, scroll_offset, target, scroll_step, horizontal)
 
 	scroll_off = scroll_offset / target
 	cursor.X = scroll.X + int(scroll_off*float64(scroll.W))
@@ -2606,15 +2624,28 @@ func (mw *masterWindow) PopupOpen(title string, flags WindowFlags, rect rect.Rec
 	go func() {
 		mw.uilock.Lock()
 		defer mw.uilock.Unlock()
-		mw.ctx.popupOpen(title, flags, rect, scale, updateFn)
+		mw.ctx.popupOpen(title, flags, rect, scale, updateFn, nil)
 		mw.Changed()
 	}()
 }
 
-func (ctx *context) popupOpen(title string, flags WindowFlags, rect rect.Rect, scale bool, updateFn UpdateFn) {
+func (mw *masterWindow) PopupOpenPersistent(title string, flags WindowFlags, rect rect.Rect, scale bool, updateFn UpdateFn, saveFn SaveFn) {
+	if flags&WindowNonmodal == 0 && saveFn != nil {
+		panic("save function set on modal window")
+	}
+	go func() {
+		mw.uilock.Lock()
+		defer mw.uilock.Unlock()
+		mw.ctx.popupOpen(title, flags, rect, scale, updateFn, saveFn)
+		mw.Changed()
+	}()
+}
+
+func (ctx *context) popupOpen(title string, flags WindowFlags, rect rect.Rect, scale bool, updateFn UpdateFn, saveFn SaveFn) {
 	popup := createWindow(ctx, title)
 	popup.idx = len(ctx.Windows)
 	popup.updateFn = updateFn
+	popup.saveFn = saveFn
 	if updateFn == nil {
 		panic("nil update function")
 	}
@@ -2743,7 +2774,7 @@ func (win *Window) TooltipOpen(width int, scale bool, updateFn UpdateFn) {
 	bounds.X = (in.Mouse.Pos.X + 1)
 	bounds.Y = (in.Mouse.Pos.Y + 1)
 
-	win.ctx.popupOpen(tooltipWindowTitle, WindowDynamic|WindowNoScrollbar|windowTooltip, bounds, false, updateFn)
+	win.ctx.popupOpen(tooltipWindowTitle, WindowDynamic|WindowNoScrollbar|windowTooltip, bounds, false, updateFn, nil)
 }
 
 // Shows a tooltip window containing the specified text.

@@ -53,6 +53,11 @@ type MasterWindow interface {
 	SetPerf(bool)
 
 	PopupOpen(title string, flags WindowFlags, rect rect.Rect, scale bool, updateFn UpdateFn)
+	PopupOpenPersistent(title string, flags WindowFlags, rect rect.Rect, scale bool, updateFn UpdateFn, saveFn SaveFn)
+
+	Save() ([]byte, error)
+	Restore([]byte, RestoreFn)
+	ListWindowsData() []interface{}
 }
 
 type masterWindow struct {
@@ -87,6 +92,7 @@ func NewMasterWindow(flags WindowFlags, title string, updatefn UpdateFn) MasterW
 func NewMasterWindowSize(flags WindowFlags, title string, sz image.Point, updatefn UpdateFn) MasterWindow {
 	ctx := &context{}
 	ctx.Input.Mouse.valid = true
+	ctx.DockedWindows.Split.MinSize = 40
 	wnd := &masterWindow{ctx: ctx}
 	wnd.layout.Flags = flags
 	wnd.Title = title
