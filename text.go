@@ -1220,8 +1220,14 @@ func (ed *TextEditor) doEdit(bounds rect.Rect, style *nstyle.Edit, inp *Input, c
 	prev_state := ed.Active
 
 	if ed.win.ctx.activateEditor != nil {
-		ed.Active = ed.win.ctx.activateEditor == ed
-
+		if ed.win.ctx.activateEditor == ed {
+			ed.Active = true
+			if ed.win.flags&windowDocked != 0 {
+				ed.win.ctx.dockedWindowFocus = ed.win.idx
+			}
+		} else {
+			ed.Active = false
+		}
 	}
 
 	is_hovered := inp.Mouse.HoveringRect(bounds)
@@ -1470,7 +1476,7 @@ type drawableTextEditor struct {
 	Bounds    rect.Rect
 	Area      rect.Rect
 	RowHeight int
-	hasInput bool
+	hasInput  bool
 
 	SelectionBegin, SelectionEnd int
 

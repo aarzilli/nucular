@@ -30,12 +30,6 @@ func id(fn func (*nucular.Window)) func () func(*nucular.Window) {
 	}
 }
 
-func saveFnFor(i byte) func() []byte {
-	return func() []byte {
-		return []byte{ i }
-	}
-}
-
 type Demo struct {
 	Name string
 	Title string
@@ -76,16 +70,6 @@ var demos = []Demo{
 	} },
 	{ "nestedmenu", "Nested menu demo", 0, id(nestedMenu) },
 	{ "list", "List", nucular.WindowNoScrollbar, id(listDemo) },
-	{ "saverestore", "Save / Restore", nucular.WindowNoScrollbar, nil },
-}
-
-func init() {
-	for i := range demos {
-		if demos[i].Name == "saverestore" {
-			demos[i].UpdateFn = saveRestoreDemo
-			return
-		}
-	}
 }
 
 var Wnd nucular.MasterWindow
@@ -114,7 +98,7 @@ func main() {
 	switch whichdemo {
 	case "multi", "":
 		Wnd = nucular.NewMasterWindow(0, "Multiwindow Demo", func(w *nucular.Window) {})
-		Wnd.PopupOpenPersistent("Multiwindow Demo", nucular.WindowTitle|nucular.WindowBorder | nucular.WindowMovable | nucular.WindowScalable|nucular.WindowNonmodal, rect.Rect{ 0, 0, 400, 300 }, true, multiDemo, saveFnFor('m'))
+		Wnd.PopupOpen("Multiwindow Demo", nucular.WindowTitle|nucular.WindowBorder | nucular.WindowMovable | nucular.WindowScalable|nucular.WindowNonmodal, rect.Rect{ 0, 0, 400, 300 }, true, multiDemo)
 	default:
 		for i := range demos {
 			if demos[i].Name == whichdemo {
@@ -353,47 +337,7 @@ func multiDemo(w *nucular.Window) {
 	w.Row(30).Static(100, 100, 100)
 	for i := range demos {
 		if w.ButtonText(demos[i].Name) {
-			w.Master().PopupOpenPersistent(demos[i].Title, nucular.WindowDefaultFlags|nucular.WindowNonmodal | demos[i].Flags, rect.Rect{0, 0, 200, 200}, true, demos[i].UpdateFn(), saveFnFor(byte(i)))
-		}
-	}
-}
-
-func restoreFn(data []byte, openWndFn nucular.OpenWindowFn) error {
-	if data[0] == 'm' {
-		openWndFn("Multiwindow Demo", nucular.WindowTitle|nucular.WindowBorder | nucular.WindowMovable | nucular.WindowScalable|nucular.WindowNonmodal, multiDemo, saveFnFor('m'))
-		return nil
-	}
-	i := data[0]
-	openWndFn(demos[i].Title, nucular.WindowDefaultFlags|nucular.WindowNonmodal | demos[i].Flags, demos[i].UpdateFn(), saveFnFor(byte(i)))
-	return nil
-}
-
-func saveRestoreDemo() func(w *nucular.Window) {
-	var saveed nucular.TextEditor
-	saveed.Flags = nucular.EditSelectable | nucular.EditClipboard
-	wd, _ := os.Getwd()
-	saveed.Buffer = []rune(fmt.Sprintf("%s/save.sav", wd))
-	return func(w *nucular.Window) {
-		w.Row(30).Static(0)
-		saveed.Edit(w)
-		w.Row(30).Static(0, 100, 100)
-		w.Spacing(1)
-		if w.ButtonText("Save") {
-			s, err := w.Master().Save()
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error saving layout: %v", err)
-			}
-			ioutil.WriteFile(string(saveed.Buffer), s, 0666)
-			w.Close()
-		}
-		if w.ButtonText("Restore") {
-			data, err := ioutil.ReadFile(string(saveed.Buffer))
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error loading save file: %v", err)
-			} else {
-				w.Master().Restore(data, restoreFn)
-			}
-			w.Close()
+			w.Master().PopupOpen(demos[i].Title, nucular.WindowDefaultFlags|nucular.WindowNonmodal | demos[i].Flags, rect.Rect{0, 0, 200, 200}, true, demos[i].UpdateFn())
 		}
 	}
 }

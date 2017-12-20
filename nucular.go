@@ -23,7 +23,6 @@ import (
 ///////////////////////////////////////////////////////////////////////////////////
 
 type UpdateFn func(*Window)
-type SaveFn func() []byte
 
 type Window struct {
 	LastWidgetBounds rect.Rect
@@ -54,7 +53,6 @@ type Window struct {
 	editor *TextEditor
 	// update function
 	updateFn      UpdateFn
-	saveFn        SaveFn
 	usingSub      bool
 	began         bool
 	rowCtor       rowConstructor
@@ -719,7 +717,9 @@ func (win *Window) move(delta image.Point, pos image.Point) {
 		win.cmds.FillRect(bounds, 0, color.RGBA{0x0, 0x0, 0x50, 0x50})
 	}
 	win.Bounds.X = win.Bounds.X + delta.X
+	win.Bounds.X = clampInt(0, win.Bounds.X, win.ctx.Windows[0].Bounds.X+win.ctx.Windows[0].Bounds.W-FontHeight(win.ctx.Style.Font))
 	win.Bounds.Y = win.Bounds.Y + delta.Y
+	win.Bounds.Y = clampInt(0, win.Bounds.Y, win.ctx.Windows[0].Bounds.Y+win.ctx.Windows[0].Bounds.H-FontHeight(win.ctx.Style.Font))
 }
 
 func (win *Window) scale(delta image.Point) {
@@ -823,7 +823,7 @@ func panelLayout(ctx *context, win *Window, height int, cols int, cnt int) {
 	item_spacing := style.Spacing
 
 	if height == 0 {
-		height = layout.Clip.H - (layout.AtY - layout.Bounds.Y)
+		height = layout.Bounds.H - layout.FooterH - (layout.AtY - layout.Bounds.Y)
 		subtractHeight := true
 		if layout.Row.Index == 0 {
 			subtractHeight = false
@@ -1865,7 +1865,7 @@ func scrollbarBehavior(state *nstyle.WidgetStates, in *Input, scroll, cursor, em
 
 func scrollwheelBehavior(win *Window, scroll, scrollwheel_bounds rect.Rect, scroll_offset, target, scroll_step float64) float64 {
 	in := &win.ctx.Input
-	
+
 	if ((in.Mouse.ScrollDelta < 0) || (in.Mouse.ScrollDelta > 0)) && in.Mouse.HoveringRect(scrollwheel_bounds) {
 		/* update cursor by mouse scrolling */
 		old_scroll_offset := scroll_offset
@@ -2624,28 +2624,15 @@ func (mw *masterWindow) PopupOpen(title string, flags WindowFlags, rect rect.Rec
 	go func() {
 		mw.uilock.Lock()
 		defer mw.uilock.Unlock()
-		mw.ctx.popupOpen(title, flags, rect, scale, updateFn, nil)
+		mw.ctx.popupOpen(title, flags, rect, scale, updateFn)
 		mw.Changed()
 	}()
 }
 
-func (mw *masterWindow) PopupOpenPersistent(title string, flags WindowFlags, rect rect.Rect, scale bool, updateFn UpdateFn, saveFn SaveFn) {
-	if flags&WindowNonmodal == 0 && saveFn != nil {
-		panic("save function set on modal window")
-	}
-	go func() {
-		mw.uilock.Lock()
-		defer mw.uilock.Unlock()
-		mw.ctx.popupOpen(title, flags, rect, scale, updateFn, saveFn)
-		mw.Changed()
-	}()
-}
-
-func (ctx *context) popupOpen(title string, flags WindowFlags, rect rect.Rect, scale bool, updateFn UpdateFn, saveFn SaveFn) {
+func (ctx *context) popupOpen(title string, flags WindowFlags, rect rect.Rect, scale bool, updateFn UpdateFn) {
 	popup := createWindow(ctx, title)
 	popup.idx = len(ctx.Windows)
 	popup.updateFn = updateFn
-	popup.saveFn = saveFn
 	if updateFn == nil {
 		panic("nil update function")
 	}
@@ -2671,12 +2658,16 @@ func (ctx *context) popupOpen(title string, flags WindowFlags, rect rect.Rect, s
 func (ctx *context) autoPosition() (int, int) {
 	x, y := ctx.autopos.X, ctx.autopos.Y
 
-	ctx.autopos.X += ctx.scale(20)
-	ctx.autopos.Y += ctx.scale(20)
+	z := FontHeight(ctx.Style.Font) + 2.0*ctx.Style.NormalWindow.Header.Padding.Y
 
-	if ctx.autopos.X >= ctx.Windows[0].Bounds.W || ctx.autopos.Y >= ctx.Windows[0].Bounds.H {
-		ctx.autopos.X = 0
-		ctx.autopos.Y = 0
+	ctx.autopos.X += ctx.scale(z)
+	ctx.autopos.Y += ctx.scale(z)
+
+	if ctx.Windows[0].Bounds.W != 0 && ctx.Windows[0].Bounds.H != 0 {
+		if ctx.autopos.X >= ctx.Windows[0].Bounds.W || ctx.autopos.Y >= ctx.Windows[0].Bounds.H {
+			ctx.autopos.X = 0
+			ctx.autopos.Y = 0
+		}
 	}
 
 	return x, y
@@ -2774,7 +2765,7 @@ func (win *Window) TooltipOpen(width int, scale bool, updateFn UpdateFn) {
 	bounds.X = (in.Mouse.Pos.X + 1)
 	bounds.Y = (in.Mouse.Pos.Y + 1)
 
-	win.ctx.popupOpen(tooltipWindowTitle, WindowDynamic|WindowNoScrollbar|windowTooltip, bounds, false, updateFn, nil)
+	win.ctx.popupOpen(tooltipWindowTitle, WindowDynamic|WindowNoScrollbar|windowTooltip, bounds, false, updateFn)
 }
 
 // Shows a tooltip window containing the specified text.
