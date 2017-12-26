@@ -2637,6 +2637,7 @@ func (ctx *context) popupOpen(title string, flags WindowFlags, rect rect.Rect, s
 		panic("nil update function")
 	}
 	ctx.Windows = append(ctx.Windows, popup)
+	ctx.dockedWindowFocus = 0
 	popup.cmds.UseClipping = true
 
 	if scale {
