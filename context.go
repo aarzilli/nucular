@@ -393,7 +393,18 @@ func (ctx *context) Draw(wimg *image.RGBA) int {
 				// only draw parts of body if this command can be optimized to a border with the next command
 
 				bordopt = true
-				cmd2 := ctx.cmds[i+1]
+				cmd2 := &ctx.cmds[i+1]
+
+				if cmd2.RectFilled.Color.A != 0xff {
+					const m = 1<<16 - 1
+					sr, sg, sb, sa := cmd2.RectFilled.Color.RGBA()
+					a := (m - sa) * 0x101
+					cmd2.RectFilled.Color.R = uint8((uint32(cmd.Color.R)*a/m + sr) >> 8)
+					cmd2.RectFilled.Color.G = uint8((uint32(cmd.Color.G)*a/m + sg) >> 8)
+					cmd2.RectFilled.Color.B = uint8((uint32(cmd.Color.B)*a/m + sb) >> 8)
+					cmd2.RectFilled.Color.A = uint8((uint32(cmd.Color.A)*a/m + sa) >> 8)
+				}
+
 				border += int(cmd2.RectFilled.Rounding)
 
 				top := image.Rect(body.Min.X, body.Min.Y, body.Max.X, body.Min.Y+border)
@@ -560,13 +571,13 @@ func borderOptimize(cmd *command.Command, cmds []command.Command, idx int) (ok b
 		return false, 0
 	}
 
-	if cmds[idx].Kind != command.RectFilledCmd {
+	if cmd.Kind != command.RectFilledCmd || cmds[idx].Kind != command.RectFilledCmd {
 		return false, 0
 	}
 
 	cmd2 := cmds[idx]
 
-	if cmd2.RectFilled.Color.A != 0xff {
+	if cmd.RectFilled.Color.A != 0xff && cmd2.RectFilled.Color.A != 0xff {
 		return false, 0
 	}
 
@@ -970,6 +981,9 @@ func clip(dst *image.RGBA, r *image.Rectangle, src image.Image, sp *image.Point)
 
 func drawFill(dst *image.RGBA, r image.Rectangle, src *image.Uniform, sp image.Point, op draw.Op) {
 	clip(dst, &r, src, &sp)
+	if r.Empty() {
+		return
+	}
 	sr, sg, sb, sa := src.RGBA()
 	switch op {
 	case draw.Over:
