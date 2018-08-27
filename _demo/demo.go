@@ -24,22 +24,22 @@ const scaling = 1.8
 //var theme nucular.Theme = nucular.WhiteTheme
 var theme nstyle.Theme = nstyle.DarkTheme
 
-func id(fn func (*nucular.Window)) func () func(*nucular.Window) {
+func id(fn func(*nucular.Window)) func() func(*nucular.Window) {
 	return func() func(*nucular.Window) {
 		return fn
 	}
 }
 
 type Demo struct {
-	Name string
-	Title string
-	Flags nucular.WindowFlags
+	Name     string
+	Title    string
+	Flags    nucular.WindowFlags
 	UpdateFn func() func(*nucular.Window)
 }
 
 var demos = []Demo{
-	{ "button", "Button Demo", 0, id(buttonDemo) },
-	{ "basic", "Basic Demo", 0, func() func(*nucular.Window) {
+	{"button", "Button Demo", 0, id(buttonDemo)},
+	{"basic", "Basic Demo", 0, func() func(*nucular.Window) {
 		go func() {
 			for {
 				time.Sleep(1 * time.Second)
@@ -50,26 +50,26 @@ var demos = []Demo{
 			}
 		}()
 		return basicDemo
-	} },
-	{ "basic2", "Text Editor Demo", 0, textEditorDemo },
-	{ "calc", "Calculator Demo", 0, func() func(*nucular.Window) {
+	}},
+	{"basic2", "Text Editor Demo", 0, textEditorDemo},
+	{"calc", "Calculator Demo", 0, func() func(*nucular.Window) {
 		var cd calcDemo
 		cd.current = &cd.a
 		return cd.calculatorDemo
-	} },
-	{ "overview", "Overview", 0, func() func(*nucular.Window) {
+	}},
+	{"overview", "Overview", 0, func() func(*nucular.Window) {
 		od := newOverviewDemo()
 		od.Theme = theme
 		return od.overviewDemo
-	} },
-	{ "editor", "Multiline Text Editor", nucular.WindowNoScrollbar, multilineTextEditorDemo },
-	{ "split", "Split panel demo", nucular.WindowNoScrollbar, func() func(*nucular.Window) {
+	}},
+	{"editor", "Multiline Text Editor", nucular.WindowNoScrollbar, multilineTextEditorDemo},
+	{"split", "Split panel demo", nucular.WindowNoScrollbar, func() func(*nucular.Window) {
 		pd := &panelDebug{}
 		pd.Init()
 		return pd.Update
-	} },
-	{ "nestedmenu", "Nested menu demo", 0, id(nestedMenu) },
-	{ "list", "List", nucular.WindowNoScrollbar, id(listDemo) },
+	}},
+	{"nestedmenu", "Nested menu demo", 0, id(nestedMenu)},
+	{"list", "List", nucular.WindowNoScrollbar, id(listDemo)},
 }
 
 var Wnd nucular.MasterWindow
@@ -89,16 +89,16 @@ func main() {
 			defer pprof.StopCPUProfile()
 		}
 	}
-	
+
 	whichdemo := ""
 	if len(os.Args) > 1 {
 		whichdemo = os.Args[1]
 	}
-	
+
 	switch whichdemo {
 	case "multi", "":
 		Wnd = nucular.NewMasterWindow(0, "Multiwindow Demo", func(w *nucular.Window) {})
-		Wnd.PopupOpen("Multiwindow Demo", nucular.WindowTitle|nucular.WindowBorder | nucular.WindowMovable | nucular.WindowScalable|nucular.WindowNonmodal, rect.Rect{ 0, 0, 400, 300 }, true, multiDemo)
+		Wnd.PopupOpen("Multiwindow Demo", nucular.WindowTitle|nucular.WindowBorder|nucular.WindowMovable|nucular.WindowScalable|nucular.WindowNonmodal, rect.Rect{0, 0, 400, 300}, true, multiDemo)
 	default:
 		for i := range demos {
 			if demos[i].Name == whichdemo {
@@ -115,7 +115,7 @@ func main() {
 		}
 		os.Exit(1)
 	}
-	
+
 	Wnd.SetStyle(nstyle.FromTheme(theme, scaling))
 	Wnd.Main()
 	if dotrace {
@@ -166,12 +166,11 @@ func basicDemo(w *nucular.Window) {
 	w.PropertyInt("Compression:", 0, &compression, 100, 10, 1)
 }
 
-
 func textEditorDemo() func(w *nucular.Window) {
 	var textEditorEditor nucular.TextEditor
 	textEditorEditor.Flags = nucular.EditSelectable
 	textEditorEditor.Buffer = []rune("prova")
-	return func (w *nucular.Window) {
+	return func(w *nucular.Window) {
 		w.Row(30).Dynamic(1)
 		textEditorEditor.Maxlen = 30
 		textEditorEditor.Edit(w)
@@ -328,7 +327,27 @@ func listDemo(w *nucular.Window) {
 	}
 }
 
+func keybindings(w *nucular.Window) {
+	mw := w.Master()
+	if in := w.Input(); in != nil {
+		k := in.Keyboard
+		for _, e := range k.Keys {
+			scaling := mw.Style().Scaling
+			switch {
+			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Code == key.CodeEqualSign):
+				mw.Style().Scale(scaling + 0.1)
+			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Code == key.CodeHyphenMinus):
+				mw.Style().Scale(scaling - 0.1)
+			case (e.Modifiers == key.ModControl) && (e.Code == key.CodeF):
+				mw.SetPerf(!mw.GetPerf())
+			}
+		}
+	}
+}
+
 func multiDemo(w *nucular.Window) {
+	keybindings(w)
+
 	w.Row(20).Dynamic(1)
 	w.Label("Welcome to the multi-window demo.", "LC")
 	w.Label("Open any demo window by clicking on the buttons.", "LC")
@@ -337,7 +356,7 @@ func multiDemo(w *nucular.Window) {
 	w.Row(30).Static(100, 100, 100)
 	for i := range demos {
 		if w.ButtonText(demos[i].Name) {
-			w.Master().PopupOpen(demos[i].Title, nucular.WindowDefaultFlags|nucular.WindowNonmodal | demos[i].Flags, rect.Rect{0, 0, 200, 200}, true, demos[i].UpdateFn())
+			w.Master().PopupOpen(demos[i].Title, nucular.WindowDefaultFlags|nucular.WindowNonmodal|demos[i].Flags, rect.Rect{0, 0, 200, 200}, true, demos[i].UpdateFn())
 		}
 	}
 }

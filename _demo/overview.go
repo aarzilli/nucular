@@ -15,7 +15,6 @@ import (
 	"github.com/aarzilli/nucular/rect"
 	nstyle "github.com/aarzilli/nucular/style"
 
-	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/mouse"
 )
 
@@ -200,21 +199,8 @@ func newOverviewDemo() (od *overviewDemo) {
 }
 
 func (od *overviewDemo) overviewDemo(w *nucular.Window) {
+	keybindings(w)
 	mw := w.Master()
-	if in := w.Input(); in != nil {
-		k := in.Keyboard
-		for _, e := range k.Keys {
-			scaling := mw.Style().Scaling
-			switch {
-			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Code == key.CodeEqualSign):
-				mw.Style().Scale(scaling + 0.1)
-			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Code == key.CodeHyphenMinus):
-				mw.Style().Scale(scaling - 0.1)
-			case (e.Modifiers == key.ModControl) && (e.Code == key.CodeF):
-				mw.SetPerf(!mw.GetPerf())
-			}
-		}
-	}
 
 	style := mw.Style()
 	style.NormalWindow.Header.Align = od.HeaderAlign
