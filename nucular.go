@@ -2628,7 +2628,6 @@ func (ctx *context) nonblockOpen(flags WindowFlags, body rect.Rect, header rect.
 	popup := createWindow(ctx, "")
 	popup.idx = len(ctx.Windows)
 	popup.updateFn = updateFn
-	popup.cmds.UseClipping = true
 	ctx.Windows = append(ctx.Windows, popup)
 
 	popup.Bounds = body
@@ -2667,7 +2666,6 @@ func (ctx *context) popupOpen(title string, flags WindowFlags, rect rect.Rect, s
 	}
 	ctx.Windows = append(ctx.Windows, popup)
 	ctx.dockedWindowFocus = 0
-	popup.cmds.UseClipping = true
 
 	if scale {
 		rect.X = ctx.scale(rect.X)

@@ -61,7 +61,6 @@ func (ctx *context) setupMasterWindow(layout *panel, updatefn UpdateFn) {
 	ctx.Windows[0].idx = 0
 	ctx.Windows[0].layout = layout
 	ctx.Windows[0].flags = layout.Flags | WindowNonmodal
-	ctx.Windows[0].cmds.UseClipping = true
 	ctx.Windows[0].updateFn = updatefn
 }
 
