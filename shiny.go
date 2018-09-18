@@ -1,6 +1,7 @@
 package nucular
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -411,11 +412,25 @@ func (w *masterWindow) updateLocked() {
 
 		draw.Draw(wimg, bounds, image.White, bounds.Min, draw.Src)
 
-		fh, err := os.Create(fmt.Sprintf("framedump/frame%d.png", frameCnt))
-		if err == nil {
+		if fh, err := os.Create(fmt.Sprintf("framedump/frame%03d.png", frameCnt)); err == nil {
 			png.Encode(fh, wimg)
 			fh.Close()
 		}
+
+		if fh, err := os.Create(fmt.Sprintf("framedump/frame%03d.txt", frameCnt)); err == nil {
+			wr := bufio.NewWriter(fh)
+			fps := 1.0 / te.Sub(t0).Seconds()
+			tot := time.Duration(0)
+			fmt.Fprintf(wr, "# Update %0.4fms = %0.4f updatefn + %0.4f draw (%d primitives) [max fps %0.2f]\n", te.Sub(t0).Seconds()*1000, t1.Sub(t0).Seconds()*1000, te.Sub(t1).Seconds()*1000, nprimitives, fps)
+			for i := range w.prevCmds {
+				fmt.Fprintf(wr, "%0.2fms %#v\n", w.ctx.cmdstim[i].Seconds()*1000, w.prevCmds[i])
+				tot += w.ctx.cmdstim[i]
+			}
+			fmt.Fprintf(wr, "sanity check %0.2fms\n", tot.Seconds()*1000)
+			wr.Flush()
+			fh.Close()
+		}
+
 		frameCnt++
 	}
 	if nprimitives > 0 {

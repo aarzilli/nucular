@@ -37,6 +37,8 @@ type context struct {
 	floatWindowFocus  int
 	scrollwheelFocus  int
 	dockedCnt         int
+
+	cmdstim []time.Duration // contains timing for all commands
 }
 
 func contextAllCommands(ctx *context) {
@@ -309,7 +311,14 @@ func (ctx *context) Draw(wimg *image.RGBA) int {
 		painter = &myRGBAPainter{Image: img}
 	}
 
+	if ctx.cmdstim != nil {
+		ctx.cmdstim = ctx.cmdstim[:0]
+	}
+
 	for i := range ctx.cmds {
+		if perfUpdate {
+			t0 = time.Now()
+		}
 		icmd := &ctx.cmds[i]
 		switch icmd.Kind {
 		case command.ScissorCmd:
@@ -362,9 +371,6 @@ func (ctx *context) Draw(wimg *image.RGBA) int {
 			if i == 0 {
 				// first command draws the background, insure that it's always fully opaque
 				cmd.Color.A = 0xff
-			}
-			if perfUpdate {
-				t0 = time.Now()
 			}
 			colimg := image.NewUniform(cmd.Color)
 			op := draw.Over
@@ -484,9 +490,6 @@ func (ctx *context) Draw(wimg *image.RGBA) int {
 
 		case command.TriangleFilledCmd:
 			cmd := icmd.TriangleFilled
-			if perfUpdate {
-				t0 = time.Now()
-			}
 			if rasterizer == nil {
 				setupRasterizer()
 			}
@@ -520,9 +523,6 @@ func (ctx *context) Draw(wimg *image.RGBA) int {
 			draw.Draw(img, icmd.Rectangle(), icmd.Image.Img, image.Point{}, draw.Src)
 
 		case command.TextCmd:
-			if perfUpdate {
-				t0 = time.Now()
-			}
 			dstimg := wimg.SubImage(img.Bounds().Intersect(icmd.Rectangle())).(*image.RGBA)
 			d := font.Drawer{
 				Dst:  dstimg,
@@ -548,6 +548,10 @@ func (ctx *context) Draw(wimg *image.RGBA) int {
 			}
 		default:
 			panic(UnknownCommandErr)
+		}
+
+		if dumpFrame {
+			ctx.cmdstim = append(ctx.cmdstim, time.Since(t0))
 		}
 	}
 
