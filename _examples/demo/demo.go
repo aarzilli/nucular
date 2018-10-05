@@ -14,6 +14,7 @@ import (
 	"github.com/aarzilli/nucular/label"
 	"github.com/aarzilli/nucular/rect"
 	nstyle "github.com/aarzilli/nucular/style"
+	"github.com/aarzilli/nucular/style-editor"
 
 	"golang.org/x/mobile/event/key"
 )
@@ -70,6 +71,9 @@ var demos = []Demo{
 	}},
 	{"nestedmenu", "Nested menu demo", 0, id(nestedMenu)},
 	{"list", "List", nucular.WindowNoScrollbar, id(listDemo)},
+	{"styled", "Theme Editor", 0, func() func(*nucular.Window) {
+		return styled.StyleEditor(nil, func(out string) { fmt.Println(out) })
+	}},
 }
 
 var Wnd nucular.MasterWindow
