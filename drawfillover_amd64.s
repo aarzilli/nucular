@@ -75,3 +75,14 @@ column_loop_end:
 row_loop_end:
 	
 	RET
+	
+
+// func haveAVX2() bool
+TEXT ·haveAVX2(SB),$0
+	MOVQ $7, AX
+	MOVQ $0, CX
+	CPUID
+	SHRQ $5, BX
+	ANDQ $1, BX
+	MOVB BX, ret+0(FP)
+	RET
