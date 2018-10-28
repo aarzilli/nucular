@@ -1,11 +1,59 @@
 package nucular
 
-import "image"
+import (
+	"fmt"
+	"image"
+)
 
 func drawFillOver_SIMD_internal(base *uint8, i0, i1 int, stride, n int, adivm, sr, sg, sb, sa uint32)
-func haveAVX2() bool
+func getCPUID1() (edx, ecx uint32)
+func getCPUID70() (ebx, ecx uint32)
 
-var useSIMD = haveAVX2()
+const debugUseSIMD = false
+
+var useSIMD = func() bool {
+	dbgnosimd := func(reason string) {
+		if !debugUseSIMD {
+			return
+		}
+		fmt.Printf("can not use SIMD, %s\n", reason)
+	}
+	if debugUseSIMD {
+		fmt.Printf("useSIMD check\n")
+	}
+	edx, ecx := getCPUID1()
+	if debugUseSIMD {
+		fmt.Printf("EAX = 0x01 -> EDX = %#04x ECX = %#04x\n", edx, ecx)
+	}
+	if edx&(1<<25) == 0 {
+		dbgnosimd("no SSE")
+		return false
+	}
+	if edx&(1<<26) == 0 {
+		dbgnosimd("no SSE2")
+		return false
+	}
+	if ecx&(1<<28) == 0 {
+		dbgnosimd("no AVX1")
+		return false
+	}
+
+	ebx, ecx := getCPUID70()
+	if debugUseSIMD {
+		fmt.Printf("EAX = 0x07 ECX = 0x00 -> EBX = %#04x ECX = %#04x\n", ebx, ecx)
+	}
+
+	if ebx&(1<<5) == 0 {
+		dbgnosimd("no AVX2")
+		return false
+	}
+
+	if debugUseSIMD {
+		fmt.Printf("can use SIMD for drawFillOver\n")
+	}
+
+	return true
+}()
 
 func drawFillOver(dst *image.RGBA, r image.Rectangle, sr, sg, sb, sa uint32) {
 	const m = 1<<16 - 1

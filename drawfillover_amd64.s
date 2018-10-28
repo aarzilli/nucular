@@ -75,14 +75,18 @@ column_loop_end:
 row_loop_end:
 	
 	RET
-	
 
-// func haveAVX2() bool
-TEXT ·haveAVX2(SB),$0
+TEXT ·getCPUID1(SB),$0
+	MOVQ $1, AX
+	CPUID
+	MOVD DX, ret+0(FP)
+	MOVD CX, ret+4(FP)
+	RET
+
+TEXT ·getCPUID70(SB),$0
 	MOVQ $7, AX
 	MOVQ $0, CX
 	CPUID
-	SHRQ $5, BX
-	ANDQ $1, BX
-	MOVB BX, ret+0(FP)
+	MOVD BX, ret+0(FP)
+	MOVD CX, ret+4(FP)
 	RET
