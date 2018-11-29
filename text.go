@@ -167,7 +167,8 @@ type TextEditor struct {
 	clickCount      int
 	trueSelectStart int
 
-	needle []rune
+	needle   []rune
+	password []rune
 }
 
 type drawchunk struct {
@@ -191,6 +192,9 @@ func (ed *TextEditor) init(win *Window) {
 		if ed.win == nil {
 			if ed.Buffer == nil {
 				ed.Buffer = []rune{}
+			}
+			if ed.password == nil {
+				ed.password = []rune{}
 			}
 			ed.Filter = nil
 			ed.Cursor = 0
@@ -217,6 +221,7 @@ const (
 	EditNeverInsertMode
 	EditFocusFollowsMouse
 	EditNoContextMenu
+	EditPassword
 
 	EditSimple = EditAlwaysInsertMode
 	EditField  = EditSelectable | EditClipboard | EditSigEnter
@@ -455,7 +460,9 @@ func (state *TextEditor) clamp() {
 func (edit *TextEditor) Delete(where int, len int) {
 	/* delete characters while updating undo */
 	edit.makeundoDelete(where, len)
-
+	if edit.Flags&EditPassword != 0 {
+		edit.password = strDeleteText(edit.password, where, len)
+	}
 	edit.Buffer = strDeleteText(edit.Buffer, where, len)
 	edit.HasPreferredX = false
 }
@@ -645,6 +652,12 @@ func (edit *TextEditor) Paste(ctext string) {
 
 	text := []rune(ctext)
 
+	if edit.Flags&EditPassword != 0 {
+		edit.password = strInsertText(edit.password, edit.Cursor, text)
+		for i := range text {
+			text[i] = '*'
+		}
+	}
 	edit.Buffer = strInsertText(edit.Buffer, edit.Cursor, text)
 
 	edit.makeundoInsert(edit.Cursor, len(text))
@@ -668,19 +681,30 @@ func (edit *TextEditor) Text(text []rune) {
 			continue
 		}
 
+		if edit.Flags&EditPassword != 0 {
+			edit.DeleteSelection() /* implicitly clamps */
+			edit.password = strInsertText(edit.password, edit.Cursor, text[i:i+1])
+			edit.Buffer = strInsertText(edit.Buffer, edit.Cursor, []rune{'*'})
+			edit.makeundoInsert(edit.Cursor, 1)
+			edit.Cursor++
+			edit.HasPreferredX = false
+			continue
+		}
+
 		if edit.InsertMode && !edit.hasSelection() && edit.Cursor < len(edit.Buffer) {
 			edit.makeundoReplace(edit.Cursor, 1, 1)
 			edit.Buffer = strDeleteText(edit.Buffer, edit.Cursor, 1)
 			edit.Buffer = strInsertText(edit.Buffer, edit.Cursor, text[i:i+1])
 			edit.Cursor++
 			edit.HasPreferredX = false
-		} else {
-			edit.DeleteSelection() /* implicitly clamps */
-			edit.Buffer = strInsertText(edit.Buffer, edit.Cursor, text[i:i+1])
-			edit.makeundoInsert(edit.Cursor, 1)
-			edit.Cursor++
-			edit.HasPreferredX = false
+			continue
 		}
+
+		edit.DeleteSelection() /* implicitly clamps */
+		edit.Buffer = strInsertText(edit.Buffer, edit.Cursor, text[i:i+1])
+		edit.makeundoInsert(edit.Cursor, 1)
+		edit.Cursor++
+		edit.HasPreferredX = false
 	}
 }
 
@@ -999,6 +1023,12 @@ func texteditCreateundo(state *textUndoState, pos int, insert_len int, delete_le
 }
 
 func (edit *TextEditor) DoUndo() {
+
+	// do not allow undo on password field
+	if edit.Flags&EditPassword != 0 {
+		return
+	}
+
 	var s *textUndoState = &edit.Undo
 	var u textUndoRecord
 	var r *textUndoRecord
@@ -1035,6 +1065,12 @@ func (edit *TextEditor) DoUndo() {
 }
 
 func (edit *TextEditor) DoRedo() {
+
+	// do not allow redo on password field
+	if edit.Flags&EditPassword != 0 {
+		return
+	}
+
 	var s *textUndoState = &edit.Undo
 	var u *textUndoRecord
 	var r textUndoRecord
@@ -1793,4 +1829,22 @@ func (edit *TextEditor) Edit(win *Window) EditEvents {
 
 	ev := edit.doEdit(bounds, &style.Edit, in, cut, copy, paste)
 	return ev
+}
+
+func (edit *TextEditor) Content() []rune {
+	if edit.Flags&EditPassword != 0 {
+		return edit.password
+	}
+	return edit.Buffer
+}
+
+func NewPasswordWidget(value []rune) *TextEditor {
+	p := &TextEditor{password: value}
+	p.Buffer = make([]rune, len(value))
+	for i := range value {
+		p.Buffer[i] = '*'
+	}
+
+	p.Flags = EditField | EditPassword
+	return p
 }
