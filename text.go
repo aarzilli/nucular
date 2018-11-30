@@ -217,6 +217,7 @@ const (
 	EditNeverInsertMode
 	EditFocusFollowsMouse
 	EditNoContextMenu
+	EditPassword
 
 	EditSimple = EditAlwaysInsertMode
 	EditField  = EditSelectable | EditClipboard | EditSigEnter
@@ -1559,6 +1560,10 @@ func (d *drawableTextEditor) Draw(z *nstyle.Style, out *command.Buffer) {
 		background_color = color.RGBA{0, 0, 0, 0}
 	} else {
 		background_color = background.Data.Color
+	}
+
+	if edit.Flags&EditPassword != 0 {
+		text_color = color.RGBA{0, 0, 0, 1}
 	}
 
 	startPos := image.Point{area.X - edit.Scrollbar.X, area.Y - edit.Scrollbar.Y}
