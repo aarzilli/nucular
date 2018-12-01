@@ -74,6 +74,7 @@ type overviewDemo struct {
 	TimeSelected               int
 	Text0Editor, Text1Editor   nucular.TextEditor
 	FieldEditor                nucular.TextEditor
+	PasswordEditor             nucular.TextEditor
 	BoxEditor                  nucular.TextEditor
 
 	// Popup
@@ -182,6 +183,8 @@ func newOverviewDemo() (od *overviewDemo) {
 	od.Text0Editor.Maxlen = 64
 	od.FieldEditor.Flags = nucular.EditField
 	od.FieldEditor.Maxlen = 64
+	od.PasswordEditor.Flags = nucular.EditField
+	od.PasswordEditor.PasswordChar = '*'
 	od.BoxEditor.Flags = nucular.EditBox | nucular.EditNeverInsertMode
 	od.Text1Editor.Flags = nucular.EditField | nucular.EditSigEnter
 	od.Text1Editor.Maxlen = 64
@@ -285,6 +288,12 @@ func (od *overviewDemo) overviewDemo(w *nucular.Window) {
 			od.Text0Editor.Edit(w)
 			w.Label("Field:", "LC")
 			od.FieldEditor.Edit(w)
+			w.Row(25).Static(120, 150)
+			w.Label("Password: ", "LC")
+			od.PasswordEditor.Edit(w)
+			w.Row(25).Dynamic(1)
+			w.Label(fmt.Sprintf("password value: %q", string(od.PasswordEditor.Buffer)), "LC")
+			w.Row(25).Static(120, 150)
 			w.Label("Box:", "LC")
 			w.Row(180).Static(278)
 			od.BoxEditor.Edit(w)
