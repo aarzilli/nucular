@@ -667,6 +667,11 @@ func (edit *TextEditor) Text(text []rune) {
 			break
 		}
 
+		/* can't add tab in single-line mode */
+		if text[i] == '\t' && edit.SingleLine {
+			break
+		}
+
 		/* filter incoming text */
 		if edit.Filter != nil && !edit.Filter(text[i]) {
 			continue
@@ -1195,7 +1200,7 @@ func (edit *TextEditor) editDrawText(out *command.Buffer, style *nstyle.Edit, po
 	for index, glyph := range text {
 		switch glyph {
 		case '\t':
-			if edit.PasswordChar == 0 {
+			if EditMultiline != 0 {
 				flushTab(index)
 				start = index + 1
 			}
