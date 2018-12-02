@@ -1200,11 +1200,8 @@ func (edit *TextEditor) editDrawText(out *command.Buffer, style *nstyle.Edit, po
 	for index, glyph := range text {
 		switch glyph {
 		case '\t':
-			if EditMultiline != 0 {
-				flushTab(index)
-				start = index + 1
-			}
-
+			flushTab(index)
+			start = index + 1
 		case '\n':
 			flushLine(index)
 			line_count++
