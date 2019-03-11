@@ -449,9 +449,7 @@ func (w *masterWindow) closeLocked() {
 
 // Programmatically closes window.
 func (mw *masterWindow) Close() {
-	mw.uilock.Lock()
-	defer mw.uilock.Unlock()
-	mw.closeLocked()
+	mw.wnd.Send(lifecycle.Event{From: lifecycle.StageAlive, To: lifecycle.StageDead})
 }
 
 // Returns true if the window is closed.

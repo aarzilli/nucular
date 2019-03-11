@@ -326,6 +326,9 @@ func (od *overviewDemo) overviewMenubar(w *nucular.Window) {
 		w.Progress(&od.Prog, 100, true)
 		w.SliderInt(0, &od.Slider, 16, 1)
 		w.CheckboxText("check", &od.Check)
+		if w.MenuItem(label.TA("Close", "LC")) {
+			go w.Master().Close()
+		}
 	}
 	if w := w.Menu(label.TA("THEME", "CC"), 180, nil); w != nil {
 		w.Row(25).Dynamic(1)
