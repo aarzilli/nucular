@@ -221,6 +221,7 @@ const (
 	EditNeverInsertMode
 	EditFocusFollowsMouse
 	EditNoContextMenu
+	EditIbeamCursor
 
 	EditSimple = EditAlwaysInsertMode
 	EditField  = EditSelectable | EditClipboard | EditSigEnter
@@ -1447,6 +1448,7 @@ func (ed *TextEditor) doEdit(bounds rect.Rect, style *nstyle.Edit, inp *Input, c
 	d.Edit = ed
 	d.State = state
 	d.Style = style
+	d.Scaling = ed.win.ctx.Style.Scaling
 	d.Bounds = bounds
 	d.Area = area
 	d.RowHeight = row_height
@@ -1503,6 +1505,7 @@ type drawableTextEditor struct {
 	Edit      *TextEditor
 	State     nstyle.WidgetStates
 	Style     *nstyle.Edit
+	Scaling   float64
 	Bounds    rect.Rect
 	Area      rect.Rect
 	RowHeight int
@@ -1599,7 +1602,14 @@ func (d *drawableTextEditor) Draw(z *nstyle.Style, out *command.Buffer) {
 			cursor_pos := d.CursorPos
 			/* draw cursor at end of line */
 			var cursor rect.Rect
-			cursor.W = FontWidth(font, "i")
+			if edit.Flags&EditIbeamCursor != 0 {
+				cursor.W = int(d.Scaling)
+				if cursor.W <= 0 {
+					cursor.W = 1
+				}
+			} else {
+				cursor.W = FontWidth(font, "i")
+			}
 			cursor.H = row_height
 			cursor.X = area.X + cursor_pos.X - edit.Scrollbar.X
 			cursor.Y = area.Y + cursor_pos.Y + row_height/2.0 - cursor.H/2.0
@@ -1612,11 +1622,11 @@ func (d *drawableTextEditor) Draw(z *nstyle.Style, out *command.Buffer) {
 		d.CursorPos = pos.Sub(startPos)
 		if edit.Active && d.hasInput {
 			if edit.Cursor < len(edit.Buffer) {
-				switch edit.Buffer[edit.Cursor] {
-				case '\n', '\t':
+				cursorChar := edit.Buffer[edit.Cursor]
+				if cursorChar == '\n' || cursorChar == '\t' || edit.Flags&EditIbeamCursor != 0 {
 					pos = edit.editDrawText(out, style, pos, x_margin, edit.Buffer[edit.Cursor:edit.Cursor+1], edit.Cursor, row_height, font, background_color, text_color, true)
 					drawEolCursor()
-				default:
+				} else {
 					pos = edit.editDrawText(out, style, pos, x_margin, edit.Buffer[edit.Cursor:edit.Cursor+1], edit.Cursor, row_height, font, cursor_color, cursor_text_color, true)
 				}
 				pos = edit.editDrawText(out, style, pos, x_margin, edit.Buffer[edit.Cursor+1:], edit.Cursor+1, row_height, font, background_color, text_color, false)

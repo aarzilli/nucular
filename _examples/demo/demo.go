@@ -199,9 +199,15 @@ func multilineTextEditorDemo() func(w *nucular.Window) {
 	var multilineTextEditor nucular.TextEditor
 	bs, _ := ioutil.ReadFile("overview.go")
 	multilineTextEditor.Buffer = []rune(string(bs))
+	var ibeam bool
 	return func(w *nucular.Window) {
+		w.Row(20).Dynamic(1)
+		w.CheckboxText("I-Beam cursor", &ibeam)
 		w.Row(0).Dynamic(1)
 		multilineTextEditor.Flags = nucular.EditMultiline | nucular.EditSelectable | nucular.EditClipboard
+		if ibeam {
+			multilineTextEditor.Flags |= nucular.EditIbeamCursor
+		}
 		multilineTextEditor.Edit(w)
 	}
 }
