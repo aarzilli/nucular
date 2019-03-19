@@ -23,34 +23,6 @@ import (
 	"golang.org/x/mobile/event/mouse"
 )
 
-type MasterWindow interface {
-	context() *context
-
-	Main()
-	Changed()
-	Close()
-	Closed() bool
-	ActivateEditor(ed *TextEditor)
-
-	Style() *nstyle.Style
-	SetStyle(*nstyle.Style)
-
-	GetPerf() bool
-	SetPerf(bool)
-
-	Input() *Input
-
-	PopupOpen(title string, flags WindowFlags, rect rect.Rect, scale bool, updateFn UpdateFn)
-
-	Walk(WindowWalkFn)
-	ResetWindows() *DockSplit
-
-	Lock()
-	Unlock()
-}
-
-type WindowWalkFn func(title string, data interface{}, docked bool, splitSize int, rect rect.Rect)
-
 const perfUpdate = false
 const dumpFrame = false
 

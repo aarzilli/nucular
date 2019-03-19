@@ -326,6 +326,9 @@ func (od *overviewDemo) overviewMenubar(w *nucular.Window) {
 		w.Progress(&od.Prog, 100, true)
 		w.SliderInt(0, &od.Slider, 16, 1)
 		w.CheckboxText("check", &od.Check)
+		perf := w.Master().GetPerf()
+		w.CheckboxText("Show perf", &perf)
+		w.Master().SetPerf(perf)
 		if w.MenuItem(label.TA("Close", "LC")) {
 			go w.Master().Close()
 		}

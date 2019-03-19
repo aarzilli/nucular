@@ -116,10 +116,7 @@ func Show(hwnd syscall.Handle) {
 }
 
 func Release(hwnd syscall.Handle) {
-	// TODO(andlabs): check for errors from this?
-	// TODO(andlabs): remove unsafe
-	_DestroyWindow(hwnd)
-	// TODO(andlabs): what happens if we're still painting?
+	SendMessage(hwnd, _WM_CLOSE, 0, 0)
 }
 
 func sendFocus(hwnd syscall.Handle, uMsg uint32, wParam, lParam uintptr) (lResult uintptr) {
@@ -170,8 +167,11 @@ func sendSize(hwnd syscall.Handle) {
 }
 
 func sendClose(hwnd syscall.Handle, uMsg uint32, wParam, lParam uintptr) (lResult uintptr) {
+	// TODO(ktye): DefWindowProc calls DestroyWindow by default.
+	// To intercept destruction of the window, return 0 and call
+	// DestroyWindow when appropriate.
 	LifecycleEvent(hwnd, lifecycle.StageDead)
-	return 0
+	return _DefWindowProc(hwnd, uMsg, wParam, lParam)
 }
 
 func sendMouseEvent(hwnd syscall.Handle, uMsg uint32, wParam, lParam uintptr) (lResult uintptr) {

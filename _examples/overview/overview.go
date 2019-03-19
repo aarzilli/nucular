@@ -354,6 +354,9 @@ func (od *overviewDemo) overviewMenubar(w *nucular.Window) {
 		w.Progress(&od.Prog, 100, true)
 		w.SliderInt(0, &od.Slider, 16, 1)
 		w.CheckboxText("check", &od.Check)
+		perf := w.Master().GetPerf()
+		w.CheckboxText("Show perf", &perf)
+		w.Master().SetPerf(perf)
 	}
 	if w := w.Menu(label.TA("THEME", "CC"), 180, nil); w != nil {
 		w.Row(25).Dynamic(1)
