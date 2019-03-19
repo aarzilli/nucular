@@ -2649,18 +2649,6 @@ func (ctx *context) nonblockOpen(flags WindowFlags, body rect.Rect, header rect.
 	return popup
 }
 
-// Opens a popup window inside win. Will return true until the
-// popup window is closed.
-// The contents of the popup window will be updated by updateFn
-func (mw *masterWindow) PopupOpen(title string, flags WindowFlags, rect rect.Rect, scale bool, updateFn UpdateFn) {
-	go func() {
-		mw.uilock.Lock()
-		defer mw.uilock.Unlock()
-		mw.ctx.popupOpen(title, flags, rect, scale, updateFn)
-		mw.Changed()
-	}()
-}
-
 func (ctx *context) popupOpen(title string, flags WindowFlags, rect rect.Rect, scale bool, updateFn UpdateFn) {
 	popup := createWindow(ctx, title)
 	popup.idx = len(ctx.Windows)

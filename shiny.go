@@ -1,14 +1,14 @@
+// +build linux,!nucular_mobile darwin,!nucular_mobile windows,!nucular_mobile
+
 package nucular
 
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"image"
 	"image/draw"
 	"image/png"
-	"io"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -32,43 +32,10 @@ import (
 
 //go:generate go-bindata -o internal/assets/assets.go -pkg assets DroidSansMono.ttf
 
-const perfUpdate = false
-const dumpFrame = false
-
 var frameCnt = 0
-
-var UnknownCommandErr = errors.New("unknown command")
 
 var clipboardStarted bool = false
 var clipboardMu sync.Mutex
-
-type MasterWindow interface {
-	context() *context
-
-	Main()
-	Changed()
-	Close()
-	Closed() bool
-	ActivateEditor(ed *TextEditor)
-
-	Style() *nstyle.Style
-	SetStyle(*nstyle.Style)
-
-	GetPerf() bool
-	SetPerf(bool)
-
-	Input() *Input
-
-	PopupOpen(title string, flags WindowFlags, rect rect.Rect, scale bool, updateFn UpdateFn)
-
-	Walk(WindowWalkFn)
-	ResetWindows() *DockSplit
-
-	Lock()
-	Unlock()
-}
-
-type WindowWalkFn func(title string, data interface{}, docked bool, splitSize int, rect rect.Rect)
 
 type masterWindow struct {
 	Title  string
@@ -275,46 +242,6 @@ func (w *masterWindow) handleEventLocked(ei interface{}) bool {
 	}
 
 	return true
-}
-
-func (ctx *context) processKeyEvent(e key.Event, textbuffer *bytes.Buffer) {
-	if e.Direction == key.DirRelease {
-		return
-	}
-
-	evinNotext := func() {
-		for _, k := range ctx.Input.Keyboard.Keys {
-			if k.Code == e.Code {
-				k.Modifiers |= e.Modifiers
-				return
-			}
-		}
-		ctx.Input.Keyboard.Keys = append(ctx.Input.Keyboard.Keys, e)
-	}
-	evinText := func() {
-		if e.Modifiers == 0 || e.Modifiers == key.ModShift {
-			io.WriteString(textbuffer, string(e.Rune))
-		}
-
-		evinNotext()
-	}
-
-	switch {
-	case e.Code == key.CodeUnknown:
-		if e.Rune > 0 {
-			evinText()
-		}
-	case (e.Code >= key.CodeA && e.Code <= key.Code0) || e.Code == key.CodeSpacebar || e.Code == key.CodeHyphenMinus || e.Code == key.CodeEqualSign || e.Code == key.CodeLeftSquareBracket || e.Code == key.CodeRightSquareBracket || e.Code == key.CodeBackslash || e.Code == key.CodeSemicolon || e.Code == key.CodeApostrophe || e.Code == key.CodeGraveAccent || e.Code == key.CodeComma || e.Code == key.CodeFullStop || e.Code == key.CodeSlash || (e.Code >= key.CodeKeypadSlash && e.Code <= key.CodeKeypadPlusSign) || (e.Code >= key.CodeKeypad1 && e.Code <= key.CodeKeypadEqualSign):
-		evinText()
-	case e.Code == key.CodeTab:
-		e.Rune = '\t'
-		evinText()
-	case e.Code == key.CodeReturnEnter || e.Code == key.CodeKeypadEnter:
-		e.Rune = '\n'
-		evinText()
-	default:
-		evinNotext()
-	}
 }
 
 func (w *masterWindow) updater() {
@@ -565,4 +492,16 @@ func (mw *masterWindow) GetPerf() bool {
 
 func (mw *masterWindow) SetPerf(perf bool) {
 	mw.Perf = perf
+}
+
+// Opens a popup window inside win. Will return true until the
+// popup window is closed.
+// The contents of the popup window will be updated by updateFn
+func (mw *masterWindow) PopupOpen(title string, flags WindowFlags, rect rect.Rect, scale bool, updateFn UpdateFn) {
+	go func() {
+		mw.uilock.Lock()
+		defer mw.uilock.Unlock()
+		mw.ctx.popupOpen(title, flags, rect, scale, updateFn)
+		mw.Changed()
+	}()
 }
