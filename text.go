@@ -1113,7 +1113,7 @@ func (state *TextEditor) clearState(type_ TextEditType) {
 
 func (edit *TextEditor) SelectAll() {
 	edit.SelectStart = 0
-	edit.SelectEnd = len(edit.Buffer) + 1
+	edit.SelectEnd = len(edit.Buffer)
 }
 
 func (edit *TextEditor) editDrawText(out *command.Buffer, style *nstyle.Edit, pos image.Point, x_margin int, text []rune, textOffset int, row_height int, f font.Face, background color.RGBA, foreground color.RGBA, is_selected bool) (posOut image.Point) {
