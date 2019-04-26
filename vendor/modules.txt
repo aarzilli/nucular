@@ -10,7 +10,7 @@ github.com/golang/freetype/truetype
 # github.com/hashicorp/golang-lru v0.0.0-20160813221303-0a025b7e63ad
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
-# golang.org/x/exp v0.0.0-20190306152737-a1d7652674e8
+# golang.org/x/exp v0.0.0-20190426045226-199475d76704
 golang.org/x/exp/shiny/driver
 golang.org/x/exp/shiny/screen
 golang.org/x/exp/shiny/driver/gldriver
@@ -35,11 +35,11 @@ golang.org/x/mobile/event/mouse
 golang.org/x/mobile/event/paint
 golang.org/x/mobile/event/size
 golang.org/x/mobile/event/touch
+golang.org/x/mobile/exp/f32
 golang.org/x/mobile/exp/gl/glutil
 golang.org/x/mobile/gl
 golang.org/x/mobile/app/internal/callfn
 golang.org/x/mobile/geom
 golang.org/x/mobile/internal/mobileinit
-golang.org/x/mobile/exp/f32
 # golang.org/x/sys v0.0.0-20190312061237-fead79001313
 golang.org/x/sys/windows

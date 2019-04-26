@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:generate go run gen.go
+
 // x11key contains X11 numeric codes for the keyboard and mouse.
 package x11key // import "golang.org/x/exp/shiny/driver/internal/x11key"
 
@@ -47,11 +49,12 @@ func (t *KeysymTable) Lookup(detail uint8, state uint16) (rune, key.Code) {
 		// TODO: distinguish the regular '2' key and number-pad '2' key (with
 		// Num-Lock).
 		c = asciiKeycodes[unshifted]
-	} else {
-		r, c = -1, nonUnicodeKeycodes[unshifted]
+	} else if nuk := nonUnicodeKeycodes[unshifted]; nuk != key.CodeUnknown {
+		r, c = -1, nuk
+	} else if uk, isUnicode := keysymCodePoints[r]; isUnicode {
+		r = uk
 	}
 
-	// TODO: Unicode-but-not-ASCII keysyms like the Swiss keyboard's 'ö'.
 	return r, c
 }
 
