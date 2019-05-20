@@ -2489,7 +2489,7 @@ func (win *Window) doProperty(property rect.Rect, name string, text string, filt
 
 	ws := win.widgets.PrevState(property)
 	oldws := ws
-	if ws == nstyle.WidgetStateActive {
+	if ws == nstyle.WidgetStateActive && win.editor != nil {
 		ed = win.editor
 	} else {
 		ed = &TextEditor{}
