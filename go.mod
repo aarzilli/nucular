@@ -8,3 +8,5 @@ require (
 	golang.org/x/image v0.0.0-20190227222117-0694c2d4d067
 	golang.org/x/mobile v0.0.0-20190318164015-6bd122906c08
 )
+
+go 1.10

@@ -1969,8 +1969,14 @@ func doScrollbarv(win *Window, scroll, scrollwheel_bounds rect.Rect, offset floa
 	scroll_ratio = float64(scroll.H) / target
 	scroll_off = scroll_offset / target
 
+	originalScroll := scroll
+
 	/* calculate scrollbar cursor bounds */
 	cursor.H = int(scroll_ratio*float64(scroll.H) - 2)
+	if minh := FontHeight(font); cursor.H < minh {
+		cursor.H = minh
+		scroll.H -= minh
+	}
 	cursor.Y = scroll.Y + int(scroll_off*float64(scroll.H)) + 1
 	cursor.W = scroll.W - 2
 	cursor.X = scroll.X + 1
@@ -1986,13 +1992,13 @@ func doScrollbarv(win *Window, scroll, scrollwheel_bounds rect.Rect, offset floa
 	out := &win.widgets
 	state := out.PrevState(scroll)
 	scroll_offset = scrollbarBehavior(&state, in, scroll, cursor, emptyNorth, emptySouth, scroll_offset, target, scroll_step, vertical)
-	scroll_offset = scrollwheelBehavior(win, scroll, scrollwheel_bounds, scroll_offset, target, scroll_step)
+	scroll_offset = scrollwheelBehavior(win, originalScroll, scrollwheel_bounds, scroll_offset, target, scroll_step)
 
 	scroll_off = scroll_offset / target
 	cursor.Y = scroll.Y + int(scroll_off*float64(scroll.H))
 
 	out.Add(state, scroll)
-	drawScrollbar(win, state, style, scroll, cursor)
+	drawScrollbar(win, state, style, originalScroll, cursor)
 
 	return scroll_offset
 }
