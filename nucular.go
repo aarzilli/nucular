@@ -828,16 +828,14 @@ func panelLayout(ctx *context, win *Window, height int, cols int, cnt int) {
 	item_spacing := style.Spacing
 
 	if height == 0 {
-		height = layout.Bounds.H - layout.FooterH - (layout.AtY - layout.Bounds.Y)
-		subtractHeight := true
-		if layout.Row.Index == 0 {
-			subtractHeight = false
-		}
-		if subtractHeight {
+		height = layout.Height - (layout.AtY - layout.Bounds.Y) - 1
+		if layout.Row.Index != 0 && (win.flags&windowPopup == 0) {
 			height -= layout.Row.Height
+		} else {
+			height -= item_spacing.Y
 		}
 		if layout.ReservedHeight > 0 {
-			height -= layout.ReservedHeight + item_spacing.Y
+			height -= layout.ReservedHeight
 		}
 	}
 
