@@ -1116,6 +1116,31 @@ func (edit *TextEditor) SelectAll() {
 	edit.SelectEnd = len(edit.Buffer)
 }
 
+func measureRunes(f font.Face, runes []rune) int {
+	var advance fixed.Int26_6
+	prevC := rune(-1)
+	for _, c := range runes {
+		if prevC >= 0 {
+			advance += f.Kern(prevC, c)
+		}
+		a, ok := f.GlyphAdvance(c)
+		if !ok {
+			// TODO: is falling back on the U+FFFD glyph the responsibility of
+			// the Drawer or the Face?
+			// TODO: set prevC = '\ufffd'?
+			continue
+		}
+		advance += a
+		prevC = c
+	}
+	return advance.Ceil()
+}
+
+func glyphAdvance(f font.Face, ch rune) int {
+	a, _ := f.GlyphAdvance(ch)
+	return a.Ceil()
+}
+
 func (edit *TextEditor) editDrawText(out *command.Buffer, style *nstyle.Edit, pos image.Point, x_margin int, text []rune, textOffset int, row_height int, f font.Face, background color.RGBA, foreground color.RGBA, is_selected bool) (posOut image.Point) {
 	if len(text) == 0 {
 		return pos
@@ -1129,17 +1154,15 @@ func (edit *TextEditor) editDrawText(out *command.Buffer, style *nstyle.Edit, po
 	pos_x, pos_y := pos.X, pos.Y
 	start := 0
 
-	d := font.Drawer{Face: f}
-
-	tabsz := d.MeasureString(" ").Ceil() * tabSizeInSpaces
-	pwsz := d.MeasureString("*").Ceil()
+	tabsz := glyphAdvance(f, ' ') * tabSizeInSpaces
+	pwsz := glyphAdvance(f, '*')
 
 	measureText := func(start, end int) int {
 		if edit.PasswordChar != 0 {
 			return pwsz * (end - start)
 		}
 		// XXX calculating text width here is slow figure out why
-		return d.MeasureString(string(text[start:end])).Ceil()
+		return measureRunes(f, text[start:end])
 	}
 
 	getText := func(start, end int) string {
