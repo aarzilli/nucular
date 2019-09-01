@@ -694,7 +694,7 @@ func (edit *TextEditor) Text(text []rune) {
 	}
 }
 
-func (state *TextEditor) key(e key.Event, font font.Face, row_height int) {
+func (state *TextEditor) key(e key.Event, font font.Face, row_height int, area_height int) {
 	readOnly := state.Flags&EditReadOnly != 0
 retry:
 	switch e.Code {
@@ -810,52 +810,26 @@ retry:
 			e.Code = key.CodeRightArrow
 			goto retry
 		}
-
-		if e.Modifiers&key.ModShift != 0 {
-			state.prepSelectionAtCursor()
-		} else if state.hasSelection() {
-			state.moveToLast()
-		}
-
-		state.clamp()
-
-		p := state.indexToCoord(state.Cursor, font, row_height)
-		p.Y += row_height
-		if state.HasPreferredX {
-			p.X = state.PreferredX
-		} else {
-			state.HasPreferredX = true
-			state.PreferredX = p.X
-		}
-		state.Cursor = state.locateCoord(p, font, row_height)
-
-		state.clamp()
+		state.verticalCursorMove(e, font, row_height, +row_height)
 
 	case key.CodeUpArrow:
 		if state.SingleLine {
 			e.Code = key.CodeRightArrow
 			goto retry
 		}
+		state.verticalCursorMove(e, font, row_height, -row_height)
 
-		if e.Modifiers&key.ModShift != 0 {
-			state.prepSelectionAtCursor()
-		} else if state.hasSelection() {
-			state.moveToFirst()
+	case key.CodePageDown:
+		if state.SingleLine {
+			break
 		}
+		state.verticalCursorMove(e, font, row_height, +area_height/2)
 
-		state.clamp()
-
-		p := state.indexToCoord(state.Cursor, font, row_height)
-		p.Y -= row_height
-		if state.HasPreferredX {
-			p.X = state.PreferredX
-		} else {
-			state.HasPreferredX = true
-			state.PreferredX = p.X
+	case key.CodePageUp:
+		if state.SingleLine {
+			break
 		}
-		state.Cursor = state.locateCoord(p, font, row_height)
-
-		state.clamp()
+		state.verticalCursorMove(e, font, row_height, -area_height/2)
 
 	case key.CodeDeleteForward:
 		if readOnly {
@@ -968,6 +942,33 @@ retry:
 			state.Cursor = end
 		}
 	}
+}
+
+func (state *TextEditor) verticalCursorMove(e key.Event, font font.Face, row_height int, offset int) {
+	if e.Modifiers&key.ModShift != 0 {
+		state.prepSelectionAtCursor()
+	} else if state.hasSelection() {
+		if offset < 0 {
+			state.moveToFirst()
+		} else {
+			state.moveToLast()
+		}
+	}
+
+	state.clamp()
+
+	p := state.indexToCoord(state.Cursor, font, row_height)
+	p.Y += offset
+
+	if state.HasPreferredX {
+		p.X = state.PreferredX
+	} else {
+		state.HasPreferredX = true
+		state.PreferredX = p.X
+	}
+	state.Cursor = state.locateCoord(p, font, row_height)
+
+	state.clamp()
 }
 
 func texteditFlushRedo(state *textUndoState) {
@@ -1413,7 +1414,7 @@ func (ed *TextEditor) doEdit(bounds rect.Rect, style *nstyle.Edit, inp *Input, c
 				}
 
 			default:
-				ed.key(e, font, row_height)
+				ed.key(e, font, row_height, area.H)
 				cursor_follow = true
 			}
 
