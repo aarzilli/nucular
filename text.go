@@ -1343,14 +1343,35 @@ func (ed *TextEditor) doEdit(bounds rect.Rect, style *nstyle.Edit, inp *Input, c
 		inpos := inp.Mouse.Pos
 		indelta := inp.Mouse.Delta
 		coord := image.Point{(inpos.X - area.X), (inpos.Y - area.Y)}
-		areaWithoutScrollbar := area
-		areaWithoutScrollbar.W -= style.ScrollbarSize.X
-		is_hovered := inp.Mouse.HoveringRect(areaWithoutScrollbar)
+
+		var isHovered bool
+		{
+			areaWithoutScrollbar := area
+			areaWithoutScrollbar.W -= style.ScrollbarSize.X
+			isHovered = inp.Mouse.HoveringRect(areaWithoutScrollbar)
+		}
+
+		var autoscrollTop bool
+		{
+			a := area
+			a.W -= style.ScrollbarSize.X
+			a.H = FontHeight(font) / 2
+			autoscrollTop = inp.Mouse.HoveringRect(a) && inp.Mouse.Buttons[mouse.ButtonLeft].Down
+		}
+
+		var autoscrollBot bool
+		{
+			a := area
+			a.W -= style.ScrollbarSize.X
+			a.Y = a.Y + a.H - FontHeight(font)/2
+			a.H = FontHeight(font) / 2
+			autoscrollBot = inp.Mouse.HoveringRect(a) && inp.Mouse.Buttons[mouse.ButtonLeft].Down
+		}
 
 		/* mouse click handler */
 		if select_all {
 			ed.SelectAll()
-		} else if is_hovered && inp.Mouse.Buttons[mouse.ButtonLeft].Down && inp.Mouse.Buttons[mouse.ButtonLeft].Clicked {
+		} else if isHovered && inp.Mouse.Buttons[mouse.ButtonLeft].Down && inp.Mouse.Buttons[mouse.ButtonLeft].Clicked {
 			if ed.doubleClick(coord) {
 				ed.clickCount++
 				if ed.clickCount > 3 {
@@ -1360,8 +1381,18 @@ func (ed *TextEditor) doEdit(bounds rect.Rect, style *nstyle.Edit, inp *Input, c
 				ed.clickCount = 1
 			}
 			ed.click(coord, font, row_height)
-		} else if is_hovered && inp.Mouse.Buttons[mouse.ButtonLeft].Down && (indelta.X != 0.0 || indelta.Y != 0.0) {
+		} else if isHovered && inp.Mouse.Buttons[mouse.ButtonLeft].Down && (indelta.X != 0.0 || indelta.Y != 0.0) {
 			ed.drag(coord, font, row_height)
+			cursor_follow = true
+		} else if autoscrollTop {
+			coord1 := coord
+			coord1.Y -= FontHeight(font)
+			ed.drag(coord1, font, row_height)
+			cursor_follow = true
+		} else if autoscrollBot {
+			coord1 := coord
+			coord1.Y += FontHeight(font)
+			ed.drag(coord1, font, row_height)
 			cursor_follow = true
 		}
 
