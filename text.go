@@ -969,6 +969,10 @@ func (state *TextEditor) verticalCursorMove(e key.Event, font font.Face, row_hei
 	state.Cursor = state.locateCoord(p, font, row_height)
 
 	state.clamp()
+
+	if e.Modifiers&key.ModShift != 0 {
+		state.SelectEnd = state.Cursor
+	}
 }
 
 func texteditFlushRedo(state *textUndoState) {
