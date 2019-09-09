@@ -215,6 +215,10 @@ func (win *Window) style() *nstyle.Window {
 	}
 }
 
+func (win *Window) WindowStyle() *nstyle.Window {
+	return win.style()
+}
+
 func panelBegin(ctx *context, win *Window, title string) {
 	in := &ctx.Input
 	style := &ctx.Style
@@ -1319,7 +1323,8 @@ func (win *Window) LayoutAvailableWidth() int {
 		return win.layout.Clip.W
 	default:
 		style := win.style()
-		return win.layout.Width - style.Padding.X*2 - style.Spacing.X - win.layout.AtX
+		panel_spacing := int(float64(win.layout.Row.Columns-1) * float64(style.Spacing.X))
+		return win.layout.Width - style.Padding.X*2 - panel_spacing - win.layout.AtX
 	}
 }
 
