@@ -14,18 +14,22 @@ import (
 )
 
 func (rtxt *RichText) handleClick(w *nucular.Window, r rect.Rect, in *nucular.Input, styleSel styleSel, line *line, chunkIdx int, hovering *bool, linkClick *int32) {
-	if rtxt.flags&Selectable == 0 && !styleSel.isLink && (rtxt.flags&Clipboard == 0) {
+	if rtxt.flags&Selectable == 0 && !styleSel.isLink && rtxt.flags&Clipboard == 0 && styleSel.Tooltip == nil {
 		return
 	}
 
 	if rtxt.flags&Clipboard != 0 && r.W > 0 && r.H > 0 {
-		w.ContextualOpen(0, image.Point{}, r, func(w *nucular.Window) {
-			w.Row(20).Dynamic(1)
-			if w.MenuItem(label.TA("Copy", "LC")) {
-				clipboard.Set(rtxt.Get(rtxt.Sel))
-				w.Close()
+		fn := styleSel.ContextMenu
+		if fn == nil {
+			fn = func(w *nucular.Window) {
+				w.Row(20).Dynamic(1)
+				if w.MenuItem(label.TA("Copy", "LC")) {
+					clipboard.Set(rtxt.Get(rtxt.Sel))
+					w.Close()
+				}
 			}
-		})
+		}
+		w.ContextualOpen(0, image.Point{}, r, fn)
 	}
 
 	oldSel := rtxt.Sel
@@ -76,7 +80,7 @@ func (rtxt *RichText) handleClick(w *nucular.Window, r rect.Rect, in *nucular.In
 			rtxt.down = true
 			rtxt.isClick = true
 		}
-		if styleSel.isLink && hovering != nil && in.Mouse.HoveringRect(r) {
+		if (styleSel.isLink || styleSel.Tooltip != nil) && hovering != nil && in.Mouse.HoveringRect(r) {
 			*hovering = true
 		}
 	}

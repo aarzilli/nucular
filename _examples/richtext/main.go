@@ -67,14 +67,14 @@ func updatefn(w *nucular.Window) {
 		rtxt.FollowCursor()
 		lastNeedle = string(searchEd.Buffer)
 		rtxt.Sel.S = rtxt.Sel.E
-		rtxt.Look(lastNeedle)
+		rtxt.Look(lastNeedle, true)
 	}
 	w.MenubarEnd()
 
 	if string(searchEd.Buffer) != lastNeedle {
 		rtxt.FollowCursor()
 		lastNeedle = string(searchEd.Buffer)
-		rtxt.Look(lastNeedle)
+		rtxt.Look(lastNeedle, true)
 	}
 
 	changed := false
@@ -96,14 +96,14 @@ func updatefn(w *nucular.Window) {
 		switch selected {
 		case 0:
 			c.Align(richtext.Align(align))
-			c.SetStyle(header, color.RGBA{}, color.RGBA{}, color.RGBA{}, 0)
+			c.SetStyle(richtext.TextStyle{Face: header})
 			c.Text("Vispa Teresa\n")
-			c.SetStyle(proportional, color.RGBA{}, color.RGBA{}, color.RGBA{}, 0)
+			c.SetStyle(richtext.TextStyle{Face: proportional})
 			c.Text("\n")
 			c.Text("La vispa Teresa\navea tra l'erbetta\na volo sorpresa\ngentil farfalletta\n\n")
 			c.Text("E tutta giuliva\nstringendola viva\ngridava a distesa\nl'ho presa! l'ho presa!\n\n")
 			c.SaveStyle()
-			c.SetStyle(proportional, color.RGBA{0x00, 0x88, 0xdd, 0xff}, color.RGBA{}, color.RGBA{}, richtext.Underline)
+			c.SetStyle(richtext.TextStyle{Face: proportional, Color: color.RGBA{0x00, 0x88, 0xdd, 0xff}, Flags: richtext.Underline})
 			if c.Link("Link 1 (inline)", color.RGBA{0x00, 0xaa, 0xff, 0xff}, nil) {
 				w.Master().PopupOpen("Clicked! (1)", nucular.WindowDefaultFlags, rect.Rect{0, 0, 200, 200}, true, func(w *nucular.Window) {
 					w.Row(30).Dynamic(1)
@@ -112,7 +112,7 @@ func updatefn(w *nucular.Window) {
 			}
 			c.RestoreStyle()
 			c.Text(" ")
-			c.SetStyle(proportional, color.RGBA{0x00, 0x88, 0xdd, 0xff}, color.RGBA{}, color.RGBA{}, richtext.Underline)
+			c.SetStyle(richtext.TextStyle{Face: proportional, Color: color.RGBA{0x00, 0x88, 0xdd, 0xff}, Flags: richtext.Underline})
 			c.Link("Link 2 (callback)", color.RGBA{0x00, 0xaa, 0xff, 0xff}, func() {
 				w.Master().PopupOpen("Clicked! (2)", nucular.WindowDefaultFlags, rect.Rect{0, 0, 200, 200}, true, func(w *nucular.Window) {
 					w.Row(30).Dynamic(1)
@@ -122,31 +122,31 @@ func updatefn(w *nucular.Window) {
 
 		case 1:
 			c.Align(richtext.Align(align))
-			c.SetStyle(proportional, color.RGBA{}, color.RGBA{}, color.RGBA{}, 0)
+			c.SetStyle(richtext.TextStyle{Face: proportional})
 			c.Text(bigEnchillada)
 
 		case 2:
 			c.Align(richtext.Align(align))
-			c.SetStyle(proportional, color.RGBA{}, color.RGBA{}, color.RGBA{}, 0)
+			c.SetStyle(richtext.TextStyle{Face: proportional})
 			c.Text(bigEnchillada)
-			c.SetStyleForSel(findSel(bigEnchillada, "elite"), header, color.RGBA{}, color.RGBA{}, color.RGBA{}, 0)
-			c.SetStyleForSel(findSel(bigEnchillada, "elites"), header, color.RGBA{}, color.RGBA{}, color.RGBA{0xff, 0x00, 0x00, 0xff}, 0)
-			c.SetStyleForSel(findSel(bigEnchillada, "hivemind consciousness"), header, color.RGBA{}, color.RGBA{}, color.RGBA{}, 0)
-			c.SetStyleForSel(findSel(bigEnchillada, "Einstein's physics"), bold, color.RGBA{}, color.RGBA{}, color.RGBA{}, 0)
-			c.SetStyleForSel(findSel(bigEnchillada, "Max Planck physics"), bold, color.RGBA{}, color.RGBA{}, color.RGBA{}, 0)
-			c.SetStyleForSel(findSel(bigEnchillada, "it's a false hologram, it is artificial"), italic, color.RGBA{}, color.RGBA{}, color.RGBA{}, 0)
-			c.SetStyleForSel(findSel(bigEnchillada, "break-away civilization"), proportional, color.RGBA{}, color.RGBA{}, color.RGBA{}, richtext.Underline)
-			c.SetStyleForSel(findSel(bigEnchillada, "cut off the pedophiles"), header, color.RGBA{}, color.RGBA{}, color.RGBA{}, 0)
-			c.SetStyleForSel(findSel(bigEnchillada, "lust for power"), proportional, color.RGBA{}, color.RGBA{}, color.RGBA{0x00, 0x00, 0xff, 0xff}, 0)
-			c.SetStyleForSel(findSel(bigEnchillada, `all physics showed it: there's at least 12 dimensions. And now all top scientists and billionaires are coming out and saying "it's a false hologram, it is artificial" the computers are scanning it and finding tension points where it's artificially projected and gravity is bleeding in to this universe. That's what they call dark matter.`), proportional, color.RGBA{0x00, 0x00, 0x00, 0xff}, color.RGBA{}, color.RGBA{0x00, 0xff, 0x00, 0xff}, 0)
-			c.SetStyleForSel(findSel(bigEnchillada, "And so Google was set up"), proportional, color.RGBA{}, color.RGBA{}, color.RGBA{}, richtext.Underline)
-			c.SetStyleForSel(findSel(bigEnchillada, "they wanted to build a giant artificial system"), proportional, color.RGBA{}, color.RGBA{}, color.RGBA{}, richtext.Strikethrough)
-			c.SetStyleForSel(findSel(bigEnchillada, "all of our thoughts go into it and we"), proportional, color.RGBA{}, color.RGBA{}, color.RGBA{}, richtext.Strikethrough|richtext.Underline)
-			c.SetStyleForSel(findSel(bigEnchillada, "Google believes"), header, color.RGBA{}, color.RGBA{}, color.RGBA{}, 0)
+			c.SetStyleForSel(findSel(bigEnchillada, "elite"), richtext.TextStyle{Face: header})
+			c.SetStyleForSel(findSel(bigEnchillada, "elites"), richtext.TextStyle{Face: header, BgColor: color.RGBA{0xff, 0x00, 0x00, 0xff}})
+			c.SetStyleForSel(findSel(bigEnchillada, "hivemind consciousness"), richtext.TextStyle{Face: header})
+			c.SetStyleForSel(findSel(bigEnchillada, "Einstein's physics"), richtext.TextStyle{Face: bold})
+			c.SetStyleForSel(findSel(bigEnchillada, "Max Planck physics"), richtext.TextStyle{Face: bold})
+			c.SetStyleForSel(findSel(bigEnchillada, "it's a false hologram, it is artificial"), richtext.TextStyle{Face: italic})
+			c.SetStyleForSel(findSel(bigEnchillada, "break-away civilization"), richtext.TextStyle{Face: proportional, Flags: richtext.Underline})
+			c.SetStyleForSel(findSel(bigEnchillada, "cut off the pedophiles"), richtext.TextStyle{Face: header})
+			c.SetStyleForSel(findSel(bigEnchillada, "lust for power"), richtext.TextStyle{Face: proportional, BgColor: color.RGBA{0x00, 0x00, 0xff, 0xff}})
+			c.SetStyleForSel(findSel(bigEnchillada, `all physics showed it: there's at least 12 dimensions. And now all top scientists and billionaires are coming out and saying "it's a false hologram, it is artificial" the computers are scanning it and finding tension points where it's artificially projected and gravity is bleeding in to this universe. That's what they call dark matter.`), richtext.TextStyle{Face: proportional, Color: color.RGBA{0x00, 0x00, 0x00, 0xff}, BgColor: color.RGBA{0x00, 0xff, 0x00, 0xff}})
+			c.SetStyleForSel(findSel(bigEnchillada, "And so Google was set up"), richtext.TextStyle{Face: proportional, Flags: richtext.Underline})
+			c.SetStyleForSel(findSel(bigEnchillada, "they wanted to build a giant artificial system"), richtext.TextStyle{Face: proportional, Flags: richtext.Strikethrough})
+			c.SetStyleForSel(findSel(bigEnchillada, "all of our thoughts go into it and we"), richtext.TextStyle{Face: proportional, Flags: richtext.Strikethrough | richtext.Underline})
+			c.SetStyleForSel(findSel(bigEnchillada, "Google believes"), richtext.TextStyle{Face: header})
 
 		case 3:
 			c.Align(richtext.Align(align))
-			c.SetStyle(proportional, color.RGBA{}, color.RGBA{}, color.RGBA{}, 0)
+			c.SetStyle(richtext.TextStyle{Face: proportional})
 			c.Text("func fib(n int) int {\n")
 			c.ParagraphStyle(richtext.Align(align), color.RGBA{0xff, 0x00, 0x00, 0xff})
 			c.Text(`	switch n {

@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/aarzilli/nucular"
@@ -121,20 +122,29 @@ func (chunk chunk) str() string {
 	return chunk.s
 }
 
+type TextStyle struct {
+	Face  font.Face
+	Flags FaceFlags
+
+	Color, SelFgColor, BgColor color.RGBA // foreground color, selected foreground color, background color
+
+	Tooltip      func(*nucular.Window)
+	TooltipWidth int
+
+	ContextMenu func(*nucular.Window)
+}
+
 type styleSel struct {
 	Sel
+	TextStyle
 
 	align     Align
 	paraColor color.RGBA
 
-	face   font.Face
-	flags  FaceFlags
 	link   func()
 	isLink bool
 
-	color, selFgColor, bgColor color.RGBA // foreground color, selected foreground color, background color
-	hoverColor                 color.RGBA // hover color for links
-
+	hoverColor color.RGBA // hover color for links
 }
 
 type line struct {
@@ -258,11 +268,20 @@ func (rtxt *RichText) Append() *Ctor {
 // Look searches from the next occurence of text inside rtxt, starting at
 // rtxt.Sel.S. Restarts the search from the start if nothing is found.
 func (rtxt *RichText) Look(text string, wraparound bool) bool {
+	insensitive := true
+
+	for _, ch := range text {
+		if unicode.IsUpper(ch) {
+			insensitive = false
+			break
+		}
+	}
+
 	var titer textIter
 	titer.Init(rtxt)
 	if titer.Advance(rtxt.Sel.S) {
 		for {
-			if ok, sel := textIterMatch(titer, text); ok {
+			if ok, sel := textIterMatch(titer, text, insensitive); ok {
 				rtxt.Sel = sel
 				return true
 			}
@@ -278,7 +297,7 @@ func (rtxt *RichText) Look(text string, wraparound bool) bool {
 
 	titer.Init(rtxt)
 	for {
-		if ok, sel := textIterMatch(titer, text); ok {
+		if ok, sel := textIterMatch(titer, text, insensitive); ok {
 			rtxt.Sel = sel
 			return true
 		}
@@ -409,14 +428,14 @@ func (ctor *Ctor) ParagraphStyle(align Align, color color.RGBA) {
 // SetStyle changes current text style. If color or selColor are the zero
 // value the default value (copied from the window) will be used.
 // If face is nil the default font face from the window style will be used.
-func (ctor *Ctor) SetStyle(face font.Face, color, selfgColor, bgColor color.RGBA, flags FaceFlags) {
+func (ctor *Ctor) SetStyle(s TextStyle) {
 	if ctor.mode == ctorLink {
 		return
 	}
 	if len(ctor.styleSels) > 0 {
 		ctor.styleSels[len(ctor.styleSels)-1].E = ctor.off + ctor.len
 	}
-	ctor.styleSels = append(ctor.styleSels, styleSel{Sel: Sel{S: int32(ctor.off + ctor.len)}, face: face, color: color, selFgColor: selfgColor, bgColor: bgColor, flags: flags})
+	ctor.styleSels = append(ctor.styleSels, styleSel{Sel: Sel{S: int32(ctor.off + ctor.len)}, TextStyle: s})
 }
 
 // SaveStyle saves the current text style.
@@ -435,7 +454,7 @@ func (ctor *Ctor) SaveStyle() {
 // ClearStyle resets the text style to the default.
 func (ctor *Ctor) ClearStyle() {
 	if len(ctor.styleSels) > 0 {
-		ctor.styleSels[len(ctor.styleSels)].E = ctor.off + ctor.len
+		ctor.styleSels[len(ctor.styleSels)-1].E = ctor.off + ctor.len
 	}
 }
 
@@ -445,7 +464,7 @@ func (ctor *Ctor) RestoreStyle() {
 		return
 	}
 	if ctor.savedStyleOk {
-		ctor.SetStyle(ctor.savedStyle.face, ctor.savedStyle.color, ctor.savedStyle.selFgColor, ctor.savedStyle.bgColor, ctor.savedStyle.flags)
+		ctor.SetStyle(ctor.savedStyle.TextStyle)
 	} else {
 		ctor.ClearStyle()
 	}
@@ -493,14 +512,14 @@ func (ctor *Ctor) findByte(off int32) byte {
 }
 
 // SetStyleForSel changes the text style for the specified region.
-func (ctor *Ctor) SetStyleForSel(sel Sel, face font.Face, color, selColor, bgColor color.RGBA, flags FaceFlags) {
+func (ctor *Ctor) SetStyleForSel(sel Sel, s TextStyle) {
 	if !ctor.selsDone {
 		ctor.closeSels()
 	}
 	if ctor.mode == ctorLink {
 		return
 	}
-	ctor.styleSels = append(ctor.styleSels, styleSel{Sel: sel, face: face, color: color, selFgColor: selColor, bgColor: bgColor, flags: flags})
+	ctor.styleSels = append(ctor.styleSels, styleSel{Sel: sel, TextStyle: s})
 }
 
 // Text adds text to the widget.
@@ -750,10 +769,14 @@ func (titer *textIter) Valid() bool {
 	return titer.valid
 }
 
-func textIterMatch(titer textIter, needle string) (bool, Sel) {
+func textIterMatch(titer textIter, needle string, insensitive bool) (bool, Sel) {
 	start := titer.off
 	for i := 0; i < len(needle); i++ {
-		if !titer.Valid() || needle[i] != titer.Char() {
+		ch := titer.Char()
+		if insensitive {
+			ch = byte(unicode.ToLower(rune(ch)))
+		}
+		if !titer.Valid() || needle[i] != ch {
 			return false, Sel{}
 		}
 		titer.Next()

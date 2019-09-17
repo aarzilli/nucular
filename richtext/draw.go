@@ -134,7 +134,12 @@ func (rtxt *RichText) drawRows(w *nucular.Window) *Ctor {
 			rtxt.handleClick(w, rect.Rect{X: p.X, Y: p.Y, H: line.h + rowSpacing, W: line.w[i]}, in, siter.styleSel, line, i, &hovering, &linkClick)
 
 			if hovering {
-				siter.styleSel.color = siter.styleSel.hoverColor
+				if siter.styleSel.isLink {
+					siter.styleSel.Color = siter.styleSel.hoverColor
+				}
+				if siter.styleSel.Tooltip != nil {
+					w.TooltipOpen(siter.styleSel.TooltipWidth, false, siter.styleSel.Tooltip)
+				}
 			}
 
 			chunkrng := Sel{line.off[i], line.off[i] + chunk.len()}
@@ -198,7 +203,7 @@ func (rtxt *RichText) drawRows(w *nucular.Window) *Ctor {
 				drawChunk(w, out, &p, chunk, siter.styleSel, line.w[i], line.h, line.asc)
 				if insel == selTick && (rtxt.flags&ShowTick != 0) && chunkrng.contains(rtxt.Sel.S) {
 					x := p.X - line.w[i] + line.chunkWidth(i, rtxt.Sel.S-line.off[i], rtxt.adv)
-					rtxt.drawTick(w, out, image.Point{x, p.Y}, line.h, siter.styleSel.color)
+					rtxt.drawTick(w, out, image.Point{x, p.Y}, line.h, siter.styleSel.Color)
 				}
 			}
 		}
@@ -211,7 +216,7 @@ func (rtxt *RichText) drawRows(w *nucular.Window) *Ctor {
 		rtxt.handleClick(w, rect.Rect{X: p.X, Y: p.Y, W: rtxt.width - p.X, H: line.h + rowSpacing}, in, siter.styleSel, line, len(line.chunks)-1, nil, nil)
 
 		if insel == selTick && (rtxt.flags&ShowTick != 0) && (line.endoff() == rtxt.Sel.S) {
-			rtxt.drawTick(w, out, p, line.h, siter.styleSel.color)
+			rtxt.drawTick(w, out, p, line.h, siter.styleSel.Color)
 		}
 
 		if insel == selInside && rtxt.Sel.contains(line.endoff()) {
@@ -246,30 +251,30 @@ func (rtxt *RichText) drawTick(w *nucular.Window, out *command.Buffer, p image.P
 }
 
 func (rtxt *RichText) drawSelectedChunk(w *nucular.Window, out *command.Buffer, p *image.Point, chunk chunk, styleSel styleSel, width, lineh, lineasc int) {
-	styleSel.bgColor = rtxt.selColor
-	styleSel.color = styleSel.selFgColor
+	styleSel.BgColor = rtxt.selColor
+	styleSel.Color = styleSel.SelFgColor
 	drawChunk(w, out, p, chunk, styleSel, width, lineh, lineasc)
 }
 
 func drawChunk(w *nucular.Window, out *command.Buffer, p *image.Point, chunk chunk, styleSel styleSel, width, lineh, lineasc int) {
 	if chunk.isspacing() {
 		if debugDrawBoundingBoxes && width > 0 {
-			yoff := alignBaseline(lineh, lineasc, styleSel.face)
+			yoff := alignBaseline(lineh, lineasc, styleSel.Face)
 			r := rect.Rect{X: p.X, Y: p.Y + yoff, H: lineh - yoff, W: width}
 			out.FillRect(r, 0, color.RGBA{0xff, 0xff, 0x00, 0xff})
 		}
-		if styleSel.bgColor != (color.RGBA{}) && width > 0 {
+		if styleSel.BgColor != (color.RGBA{}) && width > 0 {
 			r := rect.Rect{X: p.X, Y: p.Y, H: lineh, W: width}
-			out.FillRect(r, 0, styleSel.bgColor)
+			out.FillRect(r, 0, styleSel.BgColor)
 		}
 	} else {
 		r := rect.Rect{X: p.X, Y: p.Y, H: lineh, W: width}
 
-		if styleSel.bgColor != (color.RGBA{}) {
-			out.FillRect(r, 0, styleSel.bgColor)
+		if styleSel.BgColor != (color.RGBA{}) {
+			out.FillRect(r, 0, styleSel.BgColor)
 		}
 
-		yoff := alignBaseline(lineh, lineasc, styleSel.face)
+		yoff := alignBaseline(lineh, lineasc, styleSel.Face)
 		r.Y += yoff
 		r.H -= yoff
 
@@ -281,20 +286,20 @@ func drawChunk(w *nucular.Window, out *command.Buffer, p *image.Point, chunk chu
 			//TODO: DrawTextBytes
 			panic("not implemented")
 		} else {
-			out.DrawText(r, chunk.s, styleSel.face, styleSel.color)
+			out.DrawText(r, chunk.s, styleSel.Face, styleSel.Color)
 		}
 
-		if styleSel.flags&Underline != 0 {
+		if styleSel.Flags&Underline != 0 {
 			linethick := int(w.Master().Style().Scaling)
 			y := p.Y + lineh
-			out.StrokeLine(image.Point{p.X, y}, image.Point{p.X + width, y}, linethick, styleSel.color)
+			out.StrokeLine(image.Point{p.X, y}, image.Point{p.X + width, y}, linethick, styleSel.Color)
 		}
 
-		if styleSel.flags&Strikethrough != 0 {
+		if styleSel.Flags&Strikethrough != 0 {
 			linethick := int(w.Master().Style().Scaling)
-			m := styleSel.face.Metrics()
+			m := styleSel.Face.Metrics()
 			y := p.Y + lineasc + m.Descent.Ceil() - m.Ascent.Ceil()/2
-			out.StrokeLine(image.Point{p.X, y}, image.Point{p.X + width, y}, linethick, styleSel.color)
+			out.StrokeLine(image.Point{p.X, y}, image.Point{p.X + width, y}, linethick, styleSel.Color)
 		}
 	}
 
@@ -333,14 +338,14 @@ func (rtxt *RichText) calcAdvances() {
 			styleSel := siter.styleSel
 
 			if len(rtxt.adv) > 0 {
-				kern := styleSel.face.Kern(prevch, ch)
+				kern := styleSel.Face.Kern(prevch, ch)
 				rtxt.adv[len(rtxt.adv)-1] += kern
 				advance += kern
 			}
 
 			switch ch {
 			case '\t':
-				tabszf, _ := styleSel.face.GlyphAdvance(' ')
+				tabszf, _ := styleSel.Face.GlyphAdvance(' ')
 				tabszf *= 8
 				tabsz := tabszf.Ceil()
 				a := fixed.I(int((float64(advance.Ceil()+tabsz)/float64(tabsz))*float64(tabsz)) - advance.Ceil())
@@ -350,7 +355,7 @@ func (rtxt *RichText) calcAdvances() {
 				rtxt.adv = append(rtxt.adv, 0)
 				advance = 0
 			default:
-				a, _ := styleSel.face.GlyphAdvance(ch)
+				a, _ := styleSel.Face.GlyphAdvance(ch)
 				rtxt.adv = append(rtxt.adv, a)
 				advance += a
 			}
@@ -416,7 +421,7 @@ func (rtxt *RichText) reflow() {
 			}
 		}
 		if len(ln.chunks) == 0 {
-			ln.h = nucular.FontHeight(siter.styleSel.face)
+			ln.h = nucular.FontHeight(siter.styleSel.Face)
 			ln.off = append(ln.off, lastEmptyChunkOff)
 		} else {
 			ln.h = maxint(h)
@@ -447,8 +452,8 @@ func (rtxt *RichText) reflow() {
 				ln.chunks = append(ln.chunks, rtxt.chunks[i].sub(start, end))
 				ln.off = append(ln.off, off+start)
 				ln.w = append(ln.w, chunkw.Ceil())
-				h = append(h, nucular.FontHeight(styleSel.face))
-				asc = append(asc, styleSel.face.Metrics().Ascent.Ceil())
+				h = append(h, nucular.FontHeight(styleSel.Face))
+				asc = append(asc, styleSel.Face.Metrics().Ascent.Ceil())
 				linew += chunkw
 				chunkw = fixed.I(0)
 				start = end
@@ -680,24 +685,27 @@ func (siter *styleIterator) defaultStyle() {
 		siter.styleSel.E = int32(^uint32(0) >> 1)
 	}
 	siter.styleSel.align = AlignLeftDumb
-	siter.styleSel.face = siter.rtxt.face
-	siter.styleSel.flags = 0
+	siter.styleSel.Face = siter.rtxt.face
+	siter.styleSel.Flags = 0
 	siter.styleSel.link = nil
-	siter.styleSel.color = siter.rtxt.txtColor
-	siter.styleSel.selFgColor = siter.rtxt.selFgColor
-	siter.styleSel.bgColor = color.RGBA{0, 0, 0, 0}
+	siter.styleSel.Color = siter.rtxt.txtColor
+	siter.styleSel.SelFgColor = siter.rtxt.selFgColor
+	siter.styleSel.BgColor = color.RGBA{0, 0, 0, 0}
 }
 
 func (siter *styleIterator) fixDefaults() {
 	zero := color.RGBA{}
-	if siter.styleSel.color == zero {
-		siter.styleSel.color = siter.rtxt.txtColor
+	if siter.styleSel.Color == zero {
+		siter.styleSel.Color = siter.rtxt.txtColor
 	}
-	if siter.styleSel.selFgColor == zero {
-		siter.styleSel.selFgColor = siter.rtxt.selFgColor
+	if siter.styleSel.SelFgColor == zero {
+		siter.styleSel.SelFgColor = siter.rtxt.selFgColor
 	}
-	if siter.styleSel.bgColor == zero {
-		siter.styleSel.bgColor = color.RGBA{0, 0, 0, 0}
+	if siter.styleSel.BgColor == zero {
+		siter.styleSel.BgColor = color.RGBA{0, 0, 0, 0}
+	}
+	if siter.styleSel.Face == nil {
+		siter.styleSel.Face = siter.rtxt.face
 	}
 }
 
