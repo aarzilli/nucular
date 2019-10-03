@@ -25,9 +25,6 @@ var calcBtns = []string{
 	"C", "0", "=", "/",
 }
 
-func digitfn(c *calcDemo, lbl string) {
-}
-
 func (c *calcDemo) calculatorDemo(w *nucular.Window) {
 	w.Row(35).Dynamic(1)
 	c.editor.Flags = nucular.EditSimple
