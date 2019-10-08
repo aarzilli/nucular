@@ -439,9 +439,6 @@ func (win *Window) specialPanelBegin() {
 		if win.header.Contains(prevbody.Min()) && ((prevbody.Max().X > max.X) || (prevbody.Max().Y > max.Y)) && (win.Bounds.X-prevbody.W >= 0) && (win.Bounds.Y-prevbody.H >= 0) {
 			win.Bounds.X = win.Bounds.X - prevbody.W
 			win.Bounds.Y = win.Bounds.Y - prevbody.H
-		} else {
-			win.Bounds.X = win.Bounds.X
-			win.Bounds.Y = win.Bounds.Y
 		}
 	}
 
