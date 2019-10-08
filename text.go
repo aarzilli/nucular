@@ -1677,7 +1677,6 @@ func (d *drawableTextEditor) Draw(z *nstyle.Style, out *command.Buffer) {
 	}
 
 	out.PushScissor(old_clip)
-	return
 }
 
 func runeSliceEquals(a, b []rune) bool {

@@ -62,7 +62,6 @@ func contextAllCommands(ctx *context) {
 		}
 	}
 	ctx.cmds = append(ctx.cmds, ctx.finalCmds.Commands...)
-	return
 }
 
 func (ctx *context) setupMasterWindow(layout *panel, updatefn UpdateFn) {
