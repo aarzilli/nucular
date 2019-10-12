@@ -139,7 +139,6 @@ const (
 	WindowContextualReplace
 	WindowNonmodal
 
-	windowPrivate
 	windowSub
 	windowGroup
 	windowPopup

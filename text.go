@@ -565,54 +565,6 @@ func (state *TextEditor) towd(start int, dir int, dontForceAdvance bool) int {
 	return i
 }
 
-// Moves to the beginning or end of a space delimited word
-func (state *TextEditor) tospc(start int, dir int) int {
-	return state.tof(start, dir, unicode.IsSpace)
-}
-
-// Moves to the first position where f returns true
-func (state *TextEditor) tof(start int, dir int, f func(rune) bool) int {
-	first := (dir < 0)
-	notfirst := !first
-	var i int
-	for i = start; (i >= 0) && (i < len(state.Buffer)); i += dir {
-		c := state.Buffer[i]
-		if f(c) {
-			if !first {
-				i++
-			}
-			break
-		}
-		first = notfirst
-	}
-	if i < 0 {
-		i = 0
-	}
-	return i
-}
-
-// Moves to the beginning or end of something that looks like a file path
-func (state *TextEditor) tofp(start int, dir int) int {
-	first := (dir < 0)
-	notfirst := !first
-	var i int
-	for i = start; (i >= 0) && (i < len(state.Buffer)); i += dir {
-		c := state.Buffer[i]
-		if !(unicode.IsLetter(c) || unicode.IsDigit(c) || (c == '_') || (c == '-') || (c == '+') || (c == '/') || (c == '=') || (c == '~') || (c == '!') || (c == ':') || (c == ',') || (c == '.')) {
-			if !first {
-				i++
-			}
-			break
-		}
-		first = notfirst
-	}
-	if i < 0 {
-		i = 0
-	}
-	return i
-
-}
-
 func (state *TextEditor) prepSelectionAtCursor() {
 	/* update selection and cursor to match each other */
 	if !state.hasSelection() {
