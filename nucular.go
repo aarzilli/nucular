@@ -762,7 +762,7 @@ func (win *Window) widget() (valid bool, bounds rect.Rect, calcFittingWidth Fitt
 		return false, bounds, calcFittingWidth
 	}
 
-	return true, bounds, calcFittingWidth
+	return (bounds.W > 0 && bounds.H > 0), bounds, calcFittingWidth
 }
 
 func (win *Window) widgetFitting(item_padding image.Point) (valid bool, bounds rect.Rect) {
