@@ -7,9 +7,9 @@ import (
 
 	"github.com/aarzilli/nucular"
 	"github.com/aarzilli/nucular/command"
+	"github.com/aarzilli/nucular/font"
 	"github.com/aarzilli/nucular/rect"
 	nstyle "github.com/aarzilli/nucular/style"
-	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 	"golang.org/x/mobile/event/mouse"
 )
@@ -312,60 +312,6 @@ func alignBaseline(h int, asc int, face font.Face) int {
 		d = 0
 	}
 	return d
-}
-
-func (rtxt *RichText) calcAdvances() {
-	if rtxt.adv != nil {
-		rtxt.adv = rtxt.adv[:0]
-	}
-	prevch := rune(-1)
-	advance := fixed.I(0)
-	var siter styleIterator
-	siter.Init(rtxt)
-	for _, chunk := range rtxt.chunks {
-		// Note chunk is a copy of the element in the slice so we can modify it with impunity
-		for chunk.len() > 0 {
-			var ch rune
-			var rsz int
-			if chunk.b != nil {
-				ch, rsz = utf8.DecodeRune(chunk.b)
-				chunk.b = chunk.b[rsz:]
-			} else {
-				ch, rsz = utf8.DecodeRuneInString(chunk.s)
-				chunk.s = chunk.s[rsz:]
-			}
-
-			styleSel := siter.styleSel
-
-			if len(rtxt.adv) > 0 {
-				kern := styleSel.Face.Kern(prevch, ch)
-				rtxt.adv[len(rtxt.adv)-1] += kern
-				advance += kern
-			}
-
-			switch ch {
-			case '\t':
-				tabszf, _ := styleSel.Face.GlyphAdvance(' ')
-				tabszf *= 8
-				tabsz := tabszf.Ceil()
-				a := fixed.I(int((float64(advance.Ceil()+tabsz)/float64(tabsz))*float64(tabsz)) - advance.Ceil())
-				rtxt.adv = append(rtxt.adv, a)
-				advance += a
-			case '\n':
-				rtxt.adv = append(rtxt.adv, 0)
-				advance = 0
-			default:
-				a, _ := styleSel.Face.GlyphAdvance(ch)
-				rtxt.adv = append(rtxt.adv, a)
-				advance += a
-			}
-
-			prevch = ch
-			if siter.AdvanceRune(rsz) {
-				prevch = rune(-1)
-			}
-		}
-	}
 }
 
 func (rtxt *RichText) reflow() {
@@ -704,7 +650,7 @@ func (siter *styleIterator) fixDefaults() {
 	if siter.styleSel.BgColor == zero {
 		siter.styleSel.BgColor = color.RGBA{0, 0, 0, 0}
 	}
-	if siter.styleSel.Face == nil {
+	if siter.styleSel.Face == (font.Face{}) {
 		siter.styleSel.Face = siter.rtxt.face
 	}
 }

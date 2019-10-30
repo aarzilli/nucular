@@ -10,9 +10,7 @@ import (
 	"github.com/aarzilli/nucular/style"
 
 	"github.com/aarzilli/nucular/_examples/richtext/internal/assets"
-	"github.com/golang/freetype"
-	"github.com/golang/freetype/truetype"
-	"golang.org/x/image/font"
+	"github.com/aarzilli/nucular/font"
 )
 
 //go:generate go-bindata -o internal/assets/assets.go -pkg assets DejaVuSans.ttf DejaVuSans-Bold.ttf DejaVuSans-Oblique.ttf
@@ -34,20 +32,15 @@ func main() {
 	wnd.SetStyle(style.FromTheme(style.DarkTheme, 2.0))
 
 	regularData, _ := assets.Asset("DejaVuSans.ttf")
-	ttfRegular, _ := freetype.ParseFont(regularData)
-
 	boldData, _ := assets.Asset("DejaVuSans-Bold.ttf")
-	ttfBold, _ := freetype.ParseFont(boldData)
-
 	italicData, _ := assets.Asset("DejaVuSans-Oblique.ttf")
-	ttfItalic, _ := freetype.ParseFont(italicData)
 
-	proportional = truetype.NewFace(ttfRegular, &truetype.Options{Size: float64(int(float64(12) * wnd.Style().Scaling)), Hinting: font.HintingFull, DPI: 72})
-	header = truetype.NewFace(ttfRegular, &truetype.Options{Size: float64(int(float64(21) * wnd.Style().Scaling)), Hinting: font.HintingFull, DPI: 72})
+	proportional, _ = font.NewFace(regularData, int(float64(12)*wnd.Style().Scaling))
+	header, _ = font.NewFace(regularData, int(float64(21)*wnd.Style().Scaling))
 	monospace = wnd.Style().Font
 
-	bold = truetype.NewFace(ttfBold, &truetype.Options{Size: float64(int(float64(12) * wnd.Style().Scaling)), Hinting: font.HintingFull, DPI: 72})
-	italic = truetype.NewFace(ttfItalic, &truetype.Options{Size: float64(int(float64(12) * wnd.Style().Scaling)), Hinting: font.HintingFull, DPI: 72})
+	bold, _ = font.NewFace(boldData, int(float64(12)*wnd.Style().Scaling))
+	italic, _ = font.NewFace(italicData, int(float64(12)*wnd.Style().Scaling))
 
 	searchEd.Flags = nucular.EditField
 

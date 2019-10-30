@@ -11,14 +11,12 @@ import (
 	"time"
 
 	"github.com/aarzilli/nucular"
+	"github.com/aarzilli/nucular/font"
 	"github.com/aarzilli/nucular/label"
 	"github.com/aarzilli/nucular/rect"
 	nstyle "github.com/aarzilli/nucular/style"
 	"github.com/aarzilli/nucular/style-editor"
-	"github.com/golang/freetype"
-	"github.com/golang/freetype/truetype"
 
-	"golang.org/x/image/font"
 	"golang.org/x/mobile/event/key"
 )
 
@@ -127,11 +125,11 @@ func main() {
 
 	normalFontData, normerr := ioutil.ReadFile("demofont.ttf")
 	if normerr == nil {
-		normalTtfont, normerr := freetype.ParseFont(normalFontData)
+		szf := 12 * scaling
+		face, normerr := font.NewFace(normalFontData, int(szf))
 		if normerr == nil {
 			style := Wnd.Style()
-			szf := 12 * scaling
-			style.Font = truetype.NewFace(normalTtfont, &truetype.Options{Size: float64(int(szf)), Hinting: font.HintingFull, DPI: 72})
+			style.Font = face
 		}
 	}
 

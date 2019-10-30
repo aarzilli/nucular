@@ -12,7 +12,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/aarzilli/nucular"
-	"golang.org/x/image/font"
+	"github.com/aarzilli/nucular/font"
 	"golang.org/x/image/math/fixed"
 )
 
