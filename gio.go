@@ -135,6 +135,10 @@ func (mw *masterWindow) processPointerEvent(e pointer.Event) {
 			button = mouse.ButtonMiddle
 		}
 
+		if button == mouse.ButtonRight && e.Modifiers.Contain(key.ModCtrl) {
+			button = mouse.ButtonLeft
+		}
+
 		down := e.Type == pointer.Press
 		btn := &mw.ctx.Input.Mouse.Buttons[button]
 		if btn.Down == down {
