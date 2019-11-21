@@ -3,10 +3,24 @@
 package richtext
 
 import (
+	"unsafe"
+
 	"unicode/utf8"
 
+	"github.com/aarzilli/nucular/font"
+
+	ifont "golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
+
+// tracks github.com/aarzilli/nucular/font.Face
+type fontFace struct {
+	face ifont.Face
+}
+
+func fontFace2fontFace(f *font.Face) *fontFace {
+	return (*fontFace)(unsafe.Pointer(f))
+}
 
 func (rtxt *RichText) calcAdvances() {
 	if rtxt.adv != nil {
@@ -32,14 +46,14 @@ func (rtxt *RichText) calcAdvances() {
 			styleSel := siter.styleSel
 
 			if len(rtxt.adv) > 0 {
-				kern := styleSel.Face.Kern(prevch, ch)
+				kern := fontFace2fontFace(&styleSel.Face).face.Kern(prevch, ch)
 				rtxt.adv[len(rtxt.adv)-1] += kern
 				advance += kern
 			}
 
 			switch ch {
 			case '\t':
-				tabszf, _ := styleSel.Face.GlyphAdvance(' ')
+				tabszf, _ := fontFace2fontFace(&styleSel.Face).face.GlyphAdvance(' ')
 				tabszf *= 8
 				tabsz := tabszf.Ceil()
 				a := fixed.I(int((float64(advance.Ceil()+tabsz)/float64(tabsz))*float64(tabsz)) - advance.Ceil())
@@ -49,7 +63,7 @@ func (rtxt *RichText) calcAdvances() {
 				rtxt.adv = append(rtxt.adv, 0)
 				advance = 0
 			default:
-				a, _ := styleSel.Face.GlyphAdvance(ch)
+				a, _ := fontFace2fontFace(&styleSel.Face).face.GlyphAdvance(ch)
 				rtxt.adv = append(rtxt.adv, a)
 				advance += a
 			}
