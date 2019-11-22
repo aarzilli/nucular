@@ -1,0 +1,6 @@
+language: go
+os:
+  - linux
+  - osx
+install: true
+script: go build
