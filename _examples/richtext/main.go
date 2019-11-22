@@ -47,13 +47,17 @@ func main() {
 	wnd.Main()
 }
 
+var appendTestIndex int
+
 func updatefn(w *nucular.Window) {
+	changed := false
+
 	w.MenubarBegin()
 	w.Row(20).Static(150, 100, 150)
-	newselected := w.ComboSimple([]string{"Vispa Teresa", "Big Enchillada", "Fancy Enchillada", "Fibonacci"}, selected, 20)
+	newselected := w.ComboSimple([]string{"Vispa Teresa", "Big Enchillada", "Fancy Enchillada", "Fibonacci", "Append Test"}, selected, 20)
 	w.CheckboxText("Auto wrap", &autowrap)
 	newalign := w.ComboSimple([]string{"Align left (dumb)", "Align left", "Align right", "Align center", "Align justified"}, align, 20)
-	w.Row(30).Static(100, 200, 100)
+	w.Row(30).Static(100, 200, 100, 0, 80, 80, 80)
 	w.Label("Search:", "LC")
 	searchEd.Edit(w)
 	if w.ButtonText("Next") {
@@ -61,6 +65,37 @@ func updatefn(w *nucular.Window) {
 		lastNeedle = string(searchEd.Buffer)
 		rtxt.Sel.S = rtxt.Sel.E
 		rtxt.Look(lastNeedle, true)
+	}
+	if selected == 4 {
+		w.Spacing(1)
+		if w.ButtonText("Reset") {
+			changed = true
+		}
+		if w.ButtonText("Append") {
+			if appendTestIndex < len(bigEnchillada) {
+				end := appendTestIndex + 50
+				if end > len(bigEnchillada) {
+					end = len(bigEnchillada)
+				}
+				c := rtxt.Append(true)
+				c.SetStyle(richtext.TextStyle{Face: proportional})
+				if appendTestIndex/50%3 == 0 && appendTestIndex+10 < end {
+					c.SetStyle(richtext.TextStyle{Face: proportional, BgColor: color.RGBA{0xff, 0x00, 0x00, 0xff}})
+					c.Text(bigEnchillada[appendTestIndex : appendTestIndex+10])
+					c.SetStyle(richtext.TextStyle{Face: proportional})
+					c.Text(bigEnchillada[appendTestIndex+10 : end])
+				} else {
+					c.Text(bigEnchillada[appendTestIndex:end])
+				}
+				c.End()
+				appendTestIndex = end
+			}
+		}
+		if w.ButtonText("Tail") {
+			rtxt.Tail(5)
+		}
+	} else {
+		w.Spacing(4)
 	}
 	w.MenubarEnd()
 
@@ -70,7 +105,6 @@ func updatefn(w *nucular.Window) {
 		rtxt.Look(lastNeedle, true)
 	}
 
-	changed := false
 	if newselected != selected {
 		selected = newselected
 		changed = true
@@ -154,6 +188,12 @@ func updatefn(w *nucular.Window) {
 			c.Text(`	}
 }
 `)
+
+		case 4:
+			appendTestIndex = 0
+			c.SetStyle(richtext.TextStyle{Face: proportional})
+			c.Align(richtext.Align(align))
+			c.Text("Start of test\n")
 		}
 		c.End()
 	}

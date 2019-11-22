@@ -44,7 +44,7 @@ func (rtxt *RichText) drawRows(w *nucular.Window) *Ctor {
 	}
 	width := w.LayoutAvailableWidth()
 	if rtxt.changed {
-		rtxt.calcAdvances()
+		rtxt.calcAdvances(0)
 	}
 	if width != rtxt.width || rtxt.changed {
 		rtxt.width = width
@@ -231,6 +231,16 @@ func (rtxt *RichText) drawRows(w *nucular.Window) *Ctor {
 
 	if rtxt.down && !in.Mouse.Down(mouse.ButtonLeft) {
 		rtxt.down = false
+	}
+
+	if rtxt.followCursor {
+		rtxt.followCursor = false
+		if above, below := w.Invisible(); above || below {
+			scrollbary = w.At().Y - w.Bounds.H/2
+			if scrollbary < 0 {
+				scrollbary = 0
+			}
+		}
 	}
 
 	if scrollbary != w.Scrollbar.Y {

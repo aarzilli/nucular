@@ -22,15 +22,15 @@ func fontFace2fontFace(f *font.Face) *fontFace {
 	return (*fontFace)(unsafe.Pointer(f))
 }
 
-func (rtxt *RichText) calcAdvances() {
-	if rtxt.adv != nil {
+func (rtxt *RichText) calcAdvances(partial int) {
+	if rtxt.adv != nil && partial == 0 {
 		rtxt.adv = rtxt.adv[:0]
 	}
 	prevch := rune(-1)
 	advance := fixed.I(0)
 	var siter styleIterator
 	siter.Init(rtxt)
-	for _, chunk := range rtxt.chunks {
+	for _, chunk := range rtxt.chunks[partial:] {
 		// Note chunk is a copy of the element in the slice so we can modify it with impunity
 		for chunk.len() > 0 {
 			var ch rune

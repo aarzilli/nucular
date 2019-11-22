@@ -39,14 +39,14 @@ func (face *fontFace) Px(v unit.Value) int {
 	return face.size
 }
 
-func (rtxt *RichText) calcAdvances() {
-	if rtxt.adv != nil {
+func (rtxt *RichText) calcAdvances(partial int) {
+	if rtxt.adv != nil && partial == 0 {
 		rtxt.adv = rtxt.adv[:0]
 	}
 	pos := int32(0)
 	var siter styleIterator
 	siter.Init(rtxt)
-	for _, chunk := range rtxt.chunks {
+	for _, chunk := range rtxt.chunks[partial:] {
 		// Note chunk is a copy of the element in the slice so we can modify it with impunity
 		for chunk.len() > 0 {
 			len := chunk.len()
