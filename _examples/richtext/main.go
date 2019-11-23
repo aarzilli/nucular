@@ -24,7 +24,7 @@ var lastNeedle string
 
 var proportional, header, monospace, bold, italic font.Face
 
-const defaultFlags = richtext.Selectable | richtext.ShowTick | richtext.Clipboard
+const defaultFlags = richtext.Selectable | richtext.ShowTick | richtext.Clipboard | richtext.Keyboard
 
 func main() {
 	rtxt = richtext.New(defaultFlags)

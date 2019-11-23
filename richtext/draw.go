@@ -24,8 +24,9 @@ func (rtxt *RichText) drawWidget(w *nucular.Window) *Ctor {
 		flags = nucular.WindowNoHScrollbar
 	}
 
+	wp := w
 	if w := w.GroupBegin(rtxt.name, flags); w != nil {
-		r := rtxt.drawRows(w)
+		r := rtxt.drawRows(w, wp.LastWidgetBounds.H)
 		w.GroupEnd()
 		return r
 	}
@@ -33,7 +34,20 @@ func (rtxt *RichText) drawWidget(w *nucular.Window) *Ctor {
 	return nil
 }
 
-func (rtxt *RichText) drawRows(w *nucular.Window) *Ctor {
+func (rtxt *RichText) drawRows(w *nucular.Window, viewporth int) *Ctor {
+	arrowKey, pageKey := 0, 0
+	if rtxt.focused && rtxt.flags&Keyboard != 0 {
+		arrowKey, pageKey = rtxt.handleKeyboard(w.Input())
+	}
+	if viewporth == 0 {
+		viewporth = w.Bounds.H - w.At().Y
+	}
+
+	wasFocused := rtxt.focused
+	if rtxt.flags&Keyboard != 0 && (w.Input().Mouse.Buttons[mouse.ButtonLeft].Down || w.Input().Mouse.Buttons[mouse.ButtonRight].Down) {
+		rtxt.focused = false
+	}
+
 	rtxt.first = false
 	// this small row is necessary so that LayoutAvailableWidth will give us
 	// the correct available width for our shit.
@@ -75,23 +89,25 @@ func (rtxt *RichText) drawRows(w *nucular.Window) *Ctor {
 
 	for i := range rtxt.lines {
 		line := &rtxt.lines[i]
+		lineidx := i
 		if rtxt.flags&AutoWrap != 0 {
 			w.RowScaled(line.h).Dynamic(1)
 		} else {
 			w.RowScaled(line.h).StaticScaled(line.width())
 		}
 
-		if rtxt.followCursor && line.sel().contains(rtxt.Sel.S) {
+		bounds, out := w.Custom(nstyle.WidgetStateActive)
+		if rtxt.followCursor && (line.sel().contains(rtxt.Sel.S) || line.endoff() == rtxt.Sel.S) {
 			rtxt.followCursor = false
-			if above, below := w.Invisible(); above || below {
+			r := bounds
+			r.Intersect(&w.Bounds)
+			if out == nil || r.H < line.h {
 				scrollbary = w.At().Y - w.Bounds.H/2
 				if scrollbary < 0 {
 					scrollbary = 0
 				}
 			}
 		}
-
-		bounds, out := w.Custom(nstyle.WidgetStateActive)
 		if out == nil {
 			continue
 		}
@@ -201,22 +217,22 @@ func (rtxt *RichText) drawRows(w *nucular.Window) *Ctor {
 
 			if simpleDrawChunk {
 				drawChunk(w, out, &p, chunk, siter.styleSel, line.w[i], line.h, line.asc)
-				if insel == selTick && (rtxt.flags&ShowTick != 0) && chunkrng.contains(rtxt.Sel.S) {
+				if insel == selTick && (rtxt.flags&ShowTick != 0) && (wasFocused || (rtxt.flags&Keyboard == 0)) && chunkrng.contains(rtxt.Sel.S) {
 					x := p.X - line.w[i] + line.chunkWidth(i, rtxt.Sel.S-line.off[i], rtxt.adv)
-					rtxt.drawTick(w, out, image.Point{x, p.Y}, line.h, siter.styleSel.Color)
+					rtxt.drawTick(w, out, image.Point{x, p.Y}, line.h, siter.styleSel.Color, lineidx)
 				}
 			}
 		}
 
-		if len(line.chunks) == 0 && line.sel().contains(rtxt.Sel.S) {
+		if len(line.chunks) == 0 && line.sel().contains(rtxt.Sel.S) && insel != selTick {
 			insel = selInside
 		}
 
 		// click after the last chunk of text on the line
 		rtxt.handleClick(w, rect.Rect{X: p.X, Y: p.Y, W: rtxt.width - p.X, H: line.h + rowSpacing}, in, siter.styleSel, line, len(line.chunks)-1, nil, nil)
 
-		if insel == selTick && (rtxt.flags&ShowTick != 0) && (line.endoff() == rtxt.Sel.S) {
-			rtxt.drawTick(w, out, p, line.h, siter.styleSel.Color)
+		if insel == selTick && (rtxt.flags&ShowTick != 0) && (wasFocused || (rtxt.flags&Keyboard == 0)) && (line.endoff() == rtxt.Sel.S) {
+			rtxt.drawTick(w, out, p, line.h, siter.styleSel.Color, lineidx)
 		}
 
 		if insel == selInside && rtxt.Sel.contains(line.endoff()) {
@@ -243,8 +259,22 @@ func (rtxt *RichText) drawRows(w *nucular.Window) *Ctor {
 		}
 	}
 
+	if pageKey != 0 && viewporth > 0 {
+		scrollbary += (pageKey * viewporth) - nucular.FontHeight(rtxt.face)
+		if scrollbary < 0 {
+			scrollbary = 0
+		}
+	} else if arrowKey != 0 {
+		scrollbary += arrowKey * nucular.FontHeight(rtxt.face)
+		if scrollbary < 0 {
+			scrollbary = 0
+		}
+	}
+
 	if scrollbary != w.Scrollbar.Y {
 		w.Scrollbar.Y = scrollbary
+		w.Master().Changed()
+	} else if wasFocused != rtxt.focused {
 		w.Master().Changed()
 	}
 
@@ -255,7 +285,7 @@ func (rtxt *RichText) drawRows(w *nucular.Window) *Ctor {
 	return nil
 }
 
-func (rtxt *RichText) drawTick(w *nucular.Window, out *command.Buffer, p image.Point, lineh int, color color.RGBA) {
+func (rtxt *RichText) drawTick(w *nucular.Window, out *command.Buffer, p image.Point, lineh int, color color.RGBA, lineidx int) {
 	linethick := int(w.Master().Style().Scaling)
 	out.StrokeLine(image.Point{p.X, p.Y}, image.Point{p.X, p.Y + lineh}, linethick, color)
 }

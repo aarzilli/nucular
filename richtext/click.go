@@ -9,12 +9,14 @@ import (
 	"github.com/aarzilli/nucular/clipboard"
 	"github.com/aarzilli/nucular/label"
 	"github.com/aarzilli/nucular/rect"
+
 	"golang.org/x/image/math/fixed"
+	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/mouse"
 )
 
 func (rtxt *RichText) handleClick(w *nucular.Window, r rect.Rect, in *nucular.Input, styleSel styleSel, line *line, chunkIdx int, hovering *bool, linkClick *int32) {
-	if rtxt.flags&Selectable == 0 && !styleSel.isLink && rtxt.flags&Clipboard == 0 && styleSel.Tooltip == nil {
+	if rtxt.flags&Selectable == 0 && !styleSel.isLink && rtxt.flags&Clipboard == 0 && styleSel.Tooltip == nil && rtxt.flags&Keyboard == 0 {
 		return
 	}
 
@@ -29,12 +31,15 @@ func (rtxt *RichText) handleClick(w *nucular.Window, r rect.Rect, in *nucular.In
 				}
 			}
 		}
-		w.ContextualOpen(0, image.Point{}, r, fn)
+		if w := w.ContextualOpen(0, image.Point{}, r, fn); w != nil {
+			rtxt.focused = true
+		}
 	}
 
 	oldSel := rtxt.Sel
 
 	if rtxt.down {
+		rtxt.focused = true
 		if in.Mouse.HoveringRect(r) {
 			if !in.Mouse.Down(mouse.ButtonLeft) {
 				if rtxt.isClick && styleSel.isLink && in.Mouse.HoveringRect(r) {
@@ -63,6 +68,7 @@ func (rtxt *RichText) handleClick(w *nucular.Window, r rect.Rect, in *nucular.In
 		}
 	} else {
 		if in.Mouse.Down(mouse.ButtonLeft) && in.Mouse.HoveringRect(r) {
+			rtxt.focused = true
 			q := line.coordToIndex(in.Mouse.Pos, chunkIdx, rtxt.adv)
 			if time.Since(rtxt.lastClickTime) < 200*time.Millisecond && q == rtxt.dragStart {
 				rtxt.clickCount++
@@ -88,6 +94,7 @@ func (rtxt *RichText) handleClick(w *nucular.Window, r rect.Rect, in *nucular.In
 	if rtxt.flags&Selectable == 0 {
 		rtxt.Sel = oldSel
 	}
+	return
 }
 
 func (rtxt *RichText) expandSelection() {
@@ -234,4 +241,29 @@ func (citer *citer) Next() {
 			return
 		}
 	}
+}
+
+func (rtxt *RichText) handleKeyboard(in *nucular.Input) (arrowKey, pageKey int) {
+	if !rtxt.focused || rtxt.flags&Keyboard == 0 {
+		return
+	}
+
+	for _, k := range in.Keyboard.Keys {
+		switch {
+		case k.Modifiers == key.ModControl && k.Code == key.CodeC:
+			if rtxt.flags&Clipboard != 0 {
+				clipboard.Set(rtxt.Get(rtxt.Sel))
+			}
+		case k.Code == key.CodeUpArrow:
+			return -1, 0
+		case k.Code == key.CodeDownArrow:
+			return +1, 0
+		case k.Code == key.CodePageDown:
+			return 0, +1
+		case k.Code == key.CodePageUp:
+			return 0, -1
+		}
+	}
+
+	return 0, 0
 }

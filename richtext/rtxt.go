@@ -46,6 +46,8 @@ type RichText struct {
 	clickCount    int // number of consecutive clicks
 
 	followCursor bool // scroll to show cursor on screen
+
+	focused bool
 }
 
 type Sel struct {
@@ -63,6 +65,7 @@ const (
 	Selectable
 	Clipboard
 	ShowTick
+	Keyboard
 )
 
 type FaceFlags uint16
@@ -232,6 +235,7 @@ func New(flags Flags) *RichText {
 func (rtxt *RichText) Widget(w *nucular.Window, changed bool) *Ctor {
 	rtxt.initialize(w)
 	if rtxt.first || changed {
+		rtxt.changed = true
 		rtxt.ctor = Ctor{rtxt: rtxt, mode: ctorWidget, w: w}
 		return &rtxt.ctor
 	}
@@ -247,7 +251,7 @@ func (rtxt *RichText) Rows(w *nucular.Window, changed bool) *Ctor {
 		rtxt.ctor = Ctor{rtxt: rtxt, mode: ctorRows, w: w}
 		return &rtxt.ctor
 	}
-	return rtxt.drawRows(w)
+	return rtxt.drawRows(w, 0)
 }
 
 // Append allows adding text at the end of the widget. Calling Link or
@@ -434,7 +438,7 @@ func (ctor *Ctor) End() {
 	case ctorRows:
 		ctor.rtxt.styleSels = styleSels
 		ctor.rtxt.chunks = ctor.chunks
-		ctor.rtxt.drawRows(ctor.w)
+		ctor.rtxt.drawRows(ctor.w, 0)
 	case ctorWidget:
 		ctor.rtxt.styleSels = styleSels
 		ctor.rtxt.chunks = ctor.chunks
@@ -841,4 +845,12 @@ func textIterMatch(titer textIter, needle string, insensitive bool) (bool, Sel) 
 		titer.Next()
 	}
 	return true, Sel{start, titer.off}
+}
+
+func (rtxt *RichText) length() int32 {
+	r := int32(0)
+	for _, chunk := range rtxt.chunks {
+		r += chunk.len()
+	}
+	return r
 }
