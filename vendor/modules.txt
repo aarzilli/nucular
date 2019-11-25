@@ -1,6 +1,6 @@
 # dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9
 dmitri.shuralyov.com/gpu/mtl
-# gioui.org v0.0.0-20191120192806-6a2b5a8d3b93
+# gioui.org v0.0.0-20191125092449-99d97d2ef501
 gioui.org/app
 gioui.org/app/internal/gl
 gioui.org/app/internal/gpu
