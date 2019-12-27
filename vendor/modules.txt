@@ -1,12 +1,14 @@
 # dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9
 dmitri.shuralyov.com/gpu/mtl
-# gioui.org v0.0.0-20191125092449-99d97d2ef501
+# gioui.org v0.0.0-20191218180754-3dd7c8121c67
 gioui.org/app
+gioui.org/app/internal/egl
 gioui.org/app/internal/gl
 gioui.org/app/internal/gpu
 gioui.org/app/internal/input
 gioui.org/app/internal/log
 gioui.org/app/internal/window
+gioui.org/app/internal/windows
 gioui.org/app/internal/xkb
 gioui.org/f32
 gioui.org/font/opentype
