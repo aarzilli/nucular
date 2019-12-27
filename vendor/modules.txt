@@ -29,8 +29,8 @@ github.com/BurntSushi/xgb
 github.com/BurntSushi/xgb/render
 github.com/BurntSushi/xgb/shm
 github.com/BurntSushi/xgb/xproto
-# github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1
-github.com/go-gl/glfw/v3.2/glfw
+# github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72
+github.com/go-gl/glfw/v3.3/glfw
 # github.com/golang/freetype v0.0.0-20161208064710-d9be45aaf745
 github.com/golang/freetype
 github.com/golang/freetype/raster
@@ -38,7 +38,7 @@ github.com/golang/freetype/truetype
 # github.com/hashicorp/golang-lru v0.0.0-20160813221303-0a025b7e63ad
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
-# golang.org/x/exp v0.0.0-20191024150812-c286b889502e
+# golang.org/x/exp v0.0.0-20191224044220-1fea468a75e9
 golang.org/x/exp/shiny/driver
 golang.org/x/exp/shiny/driver/gldriver
 golang.org/x/exp/shiny/driver/internal/drawer
