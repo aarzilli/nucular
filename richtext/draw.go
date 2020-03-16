@@ -56,7 +56,10 @@ func (rtxt *RichText) drawRows(w *nucular.Window, viewporth int) *Ctor {
 	} else {
 		w.RowScaled(1).StaticScaled(1)
 	}
-	width := w.LayoutAvailableWidth()
+	width := rtxt.Width
+	if width <= 0 {
+		width = w.LayoutAvailableWidth()
+	}
 	if rtxt.changed {
 		rtxt.calcAdvances(0)
 	}
