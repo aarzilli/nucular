@@ -58,7 +58,8 @@ func (rtxt *RichText) drawRows(w *nucular.Window, viewporth int) *Ctor {
 	}
 	width := rtxt.Width
 	if width <= 0 {
-		width = w.LayoutAvailableWidth()
+		bounds := w.WidgetBounds()
+		width = bounds.W
 	}
 	if rtxt.changed {
 		rtxt.calcAdvances(0)

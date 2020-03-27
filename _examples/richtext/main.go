@@ -53,10 +53,15 @@ func updatefn(w *nucular.Window) {
 	changed := false
 
 	w.MenubarBegin()
-	w.Row(20).Static(150, 100, 150)
+	w.Row(20).Static(150, 100, 150, 150)
 	newselected := w.ComboSimple([]string{"Vispa Teresa", "Big Enchillada", "Fancy Enchillada", "Fibonacci", "Append Test"}, selected, 20)
 	w.CheckboxText("Auto wrap", &autowrap)
 	newalign := w.ComboSimple([]string{"Align left (dumb)", "Align left", "Align right", "Align center", "Align justified"}, align, 20)
+	if w.ButtonText("Open popup") {
+		pw := newPopupWindow()
+		w.Master().PopupOpen("Popup", nucular.WindowDynamic|nucular.WindowTitle|nucular.WindowNoScrollbar|nucular.WindowMovable|nucular.WindowBorder, rect.Rect{100, 100, 900, 700}, false, pw.Update)
+	}
+
 	w.Row(30).Static(100, 200, 100, 0, 80, 80, 80)
 	w.Label("Search:", "LC")
 	searchEd.Edit(w)
@@ -205,6 +210,25 @@ func findSel(haystack, needle string) richtext.Sel {
 		panic("not found")
 	}
 	return richtext.Sel{int32(n), int32(n + len(needle))}
+}
+
+type popupWindow struct {
+	rtxt *richtext.RichText
+}
+
+func newPopupWindow() *popupWindow {
+	return &popupWindow{
+		rtxt: richtext.New(defaultFlags | richtext.AutoWrap),
+	}
+}
+
+func (pw *popupWindow) Update(w *nucular.Window) {
+	w.Row(0).Dynamic(1)
+	if c := pw.rtxt.Widget(w, false); c != nil {
+		c.Align(richtext.AlignLeftDumb)
+		c.Text(bigEnchillada)
+		c.End()
+	}
 }
 
 const bigEnchillada = `The elite are all about trascendence and living forever and the secret of the universe and they want to know all this. Some are good, some are bad, some are a mix. But the good one never want to organize, the bad ones instead they want to organize because the lust for power. Powerful consciusnesses don't want to dominate other people, they want to empower them so they don't tend to get together until things are late in the game, then they come together, evil is always defeated, because good is so much stronger.
