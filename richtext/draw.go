@@ -71,6 +71,10 @@ func (rtxt *RichText) drawRows(w *nucular.Window, viewporth int) *Ctor {
 		}
 	}
 
+	if rtxt.Sel.S > rtxt.Sel.E {
+		rtxt.Sel.E = rtxt.Sel.S
+	}
+
 	rtxt.changed = false
 
 	in := w.Input()
