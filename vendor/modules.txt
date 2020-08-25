@@ -1,7 +1,8 @@
 # dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9
 dmitri.shuralyov.com/gpu/mtl
-# gioui.org v0.0.0-20200417085050-0cfc914d8b7d
+# gioui.org v0.0.0-20200824174209-9543b5f8f3ff
 gioui.org/app
+gioui.org/app/internal/cocoainit
 gioui.org/app/internal/d3d11
 gioui.org/app/internal/egl
 gioui.org/app/internal/glimpl
@@ -12,6 +13,7 @@ gioui.org/app/internal/windows
 gioui.org/app/internal/xkb
 gioui.org/f32
 gioui.org/font/opentype
+gioui.org/gesture
 gioui.org/gpu
 gioui.org/gpu/backend
 gioui.org/gpu/gl
@@ -19,7 +21,6 @@ gioui.org/internal/f32color
 gioui.org/internal/fling
 gioui.org/internal/opconst
 gioui.org/internal/ops
-gioui.org/internal/path
 gioui.org/internal/unsafe
 gioui.org/io/event
 gioui.org/io/key
@@ -27,6 +28,7 @@ gioui.org/io/pointer
 gioui.org/io/profile
 gioui.org/io/router
 gioui.org/io/system
+gioui.org/layout
 gioui.org/op
 gioui.org/op/clip
 gioui.org/op/paint
@@ -62,7 +64,7 @@ golang.org/x/exp/shiny/driver/mtldriver/internal/coreanim
 golang.org/x/exp/shiny/driver/windriver
 golang.org/x/exp/shiny/driver/x11driver
 golang.org/x/exp/shiny/screen
-# golang.org/x/image v0.0.0-20190802002840-cff245a6509b
+# golang.org/x/image v0.0.0-20200618115811-c13761719519
 golang.org/x/image/draw
 golang.org/x/image/font
 golang.org/x/image/font/sfnt
