@@ -237,7 +237,7 @@ func (rtxt *RichText) drawRows(w *nucular.Window, viewporth int) *Ctor {
 		}
 
 		// click after the last chunk of text on the line
-		rtxt.handleClick(w, rect.Rect{X: p.X, Y: p.Y, W: rtxt.width - p.X, H: line.h + rowSpacing}, in, siter.styleSel, line, len(line.chunks)-1, nil, nil)
+		rtxt.handleClick(w, rect.Rect{X: p.X, Y: p.Y, W: rtxt.width + bounds.X - p.X, H: line.h + rowSpacing}, in, siter.styleSel, line, len(line.chunks)-1, nil, nil)
 
 		if insel == selTick && (rtxt.flags&ShowTick != 0) && (wasFocused || (rtxt.flags&Keyboard == 0)) && (line.endoff() == rtxt.Sel.S) {
 			rtxt.drawTick(w, out, p, line.h, siter.styleSel.Color, lineidx)
