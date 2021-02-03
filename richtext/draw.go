@@ -51,11 +51,7 @@ func (rtxt *RichText) drawRows(w *nucular.Window, viewporth int) *Ctor {
 	rtxt.first = false
 	// this small row is necessary so that LayoutAvailableWidth will give us
 	// the correct available width for our shit.
-	if rtxt.flags&AutoWrap != 0 {
-		w.RowScaled(1).Dynamic(1)
-	} else {
-		w.RowScaled(1).StaticScaled(1)
-	}
+	w.RowScaled(1).Dynamic(1)
 	width := rtxt.Width
 	if width <= 0 {
 		bounds := w.WidgetBounds()
