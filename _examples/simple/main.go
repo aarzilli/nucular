@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/aarzilli/nucular"
+	"github.com/aarzilli/nucular/font"
 	"github.com/aarzilli/nucular/style"
 )
 
