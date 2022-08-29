@@ -1007,9 +1007,7 @@ func (win *Window) LayoutReserveRowScaled(height int, num int) {
 
 // Changes row layout and starts a new row.
 // Use the returned value to configure the new row layout:
-//
-//	win.Row(10).Static(100, 120, 100)
-//
+//  win.Row(10).Static(100, 120, 100)
 // If height == 0 all the row is stretched to fill all the remaining space.
 func (win *Window) Row(height int) *rowConstructor {
 	win.rowCtor.height = win.ctx.scale(height)
@@ -1556,7 +1554,7 @@ func (win *Window) LabelWrapColored(str string, color color.RGBA) {
 	text.Padding.X = item_padding.X
 	text.Padding.Y = item_padding.Y
 	text.Background = win.style().Background
-	text.Text = str
+	text.Text = color
 	win.widgets.Add(nstyle.WidgetStateInactive, bounds)
 	widgetTextWrap(&win.cmds, bounds, []rune(str), &text, win.ctx.Style.Font)
 }
