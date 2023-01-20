@@ -23,7 +23,7 @@ import (
 const dotrace = false
 const scaling = 1.8
 
-//var theme nucular.Theme = nucular.WhiteTheme
+// var theme nucular.Theme = nucular.WhiteTheme
 var theme nstyle.Theme = nstyle.DarkTheme
 
 func id(fn func(*nucular.Window)) func() func(*nucular.Window) {
@@ -41,7 +41,7 @@ type Demo struct {
 
 var demos = []Demo{
 	{"button", "Button Demo", 0, id(buttonDemo)},
-	{"basic", "Basic Demo", 0, func() func(*nucular.Window) {
+	{"basic", "Basic Demo", nucular.WindowHelp, func() func(*nucular.Window) {
 		go func() {
 			for {
 				time.Sleep(1 * time.Second)
@@ -164,6 +164,18 @@ var op difficulty = easy
 var compression int
 
 func basicDemo(w *nucular.Window) {
+	if w.HelpClicked {
+		w.Master().PopupOpen("Help", nucular.WindowMovable|nucular.WindowTitle|nucular.WindowDynamic|nucular.WindowNoScrollbar, rect.Rect{20, 100, 230, 150}, true, func(w *nucular.Window) {
+			w.Row(25).Dynamic(1)
+			w.Label("This is helping", "LC")
+			w.Row(25).Static(0, 100)
+			w.Spacing(1)
+			if w.ButtonText("OK") {
+				w.Close()
+			}
+		})
+	}
+
 	w.Row(30).Dynamic(1)
 	w.Label(time.Now().Format("15:04:05"), "RT")
 
