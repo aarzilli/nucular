@@ -12,13 +12,17 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/BurntSushi/xgb"
-	"github.com/BurntSushi/xgb/render"
-	"github.com/BurntSushi/xgb/shm"
-	"github.com/BurntSushi/xgb/xproto"
+	"github.com/jezek/xgb"
+	"github.com/jezek/xgb/render"
+	"github.com/jezek/xgb/shm"
+	"github.com/jezek/xgb/xproto"
 
 	"golang.org/x/exp/shiny/driver/internal/swizzle"
 )
+
+type bufferUploader interface {
+	upload(xd xproto.Drawable, xg xproto.Gcontext, depth uint8, dp image.Point, sr image.Rectangle)
+}
 
 type bufferImpl struct {
 	s *screenImpl

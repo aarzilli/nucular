@@ -197,7 +197,7 @@ func basicDemo(w *nucular.Window) {
 func textEditorDemo() func(w *nucular.Window) {
 	var textEditorEditor nucular.TextEditor
 	textEditorEditor.Flags = nucular.EditSelectable
-	textEditorEditor.Buffer = []rune("prova")
+	textEditorEditor.Buffer = []rune("prova prova")
 	return func(w *nucular.Window) {
 		w.Row(30).Dynamic(1)
 		textEditorEditor.Maxlen = 30

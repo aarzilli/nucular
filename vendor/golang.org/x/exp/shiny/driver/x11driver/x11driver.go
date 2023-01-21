@@ -13,9 +13,9 @@ package x11driver // import "golang.org/x/exp/shiny/driver/x11driver"
 import (
 	"fmt"
 
-	"github.com/BurntSushi/xgb"
-	"github.com/BurntSushi/xgb/render"
-	"github.com/BurntSushi/xgb/shm"
+	"github.com/jezek/xgb"
+	"github.com/jezek/xgb/render"
+	"github.com/jezek/xgb/shm"
 
 	"golang.org/x/exp/shiny/driver/internal/errscreen"
 	"golang.org/x/exp/shiny/screen"
@@ -47,11 +47,13 @@ func main(f func(screen.Screen)) (retErr error) {
 	if err := render.Init(xc); err != nil {
 		return fmt.Errorf("x11driver: render.Init failed: %v", err)
 	}
+
+	useShm := true
 	if err := shm.Init(xc); err != nil {
-		return fmt.Errorf("x11driver: shm.Init failed: %v", err)
+		useShm = false
 	}
 
-	s, err := newScreenImpl(xc)
+	s, err := newScreenImpl(xc, useShm)
 	if err != nil {
 		return err
 	}
