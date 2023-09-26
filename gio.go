@@ -439,7 +439,6 @@ func (ctx *context) Draw(ops *op.Ops, size image.Point, perf bool, perfString st
 			if !scissorless {
 				scissorStack.Pop()
 			}
-			//scissorStack = op.Save(ops)
 			scissorStack = gioclip.Rect(icmd.Rect.Rectangle()).Push(ops)
 			scissorless = false
 
@@ -866,6 +865,9 @@ func updateCharAtlas(cmds []command.Command, allm *map[charAtlasKey]map[rune]ren
 		seen[k] = true
 
 		for _, ch := range cmd.Text.String {
+			if _, ok := m[ch]; ok {
+				continue
+			}
 			face := cmd.Text.Face.Face
 			dr, mask, maskp, advance, ok := face.Glyph(fixed.P(0, cmd.Text.Face.Metrics().Ascent.Ceil()), ch)
 			img := image.NewRGBA(dr)
