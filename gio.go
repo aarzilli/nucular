@@ -376,7 +376,7 @@ func (mw *masterWindow) updateLocked(perfString string) {
 		te = time.Now()
 		fps := 1.0 / te.Sub(t0).Seconds()
 
-		s0 := fmt.Sprintf("%0.4fms + %0.4fms (%0.2f)", t1.Sub(t0).Seconds()*1000, te.Sub(t1).Seconds()*1000, fps)
+		s0 := fmt.Sprintf("%0.4fms + %0.4fms (%0.2f) [ca]", t1.Sub(t0).Seconds()*1000, te.Sub(t1).Seconds()*1000, fps)
 
 		font := mw.Style().Font
 
@@ -873,6 +873,17 @@ func updateCharAtlas(cmds []command.Command, allm *map[charAtlasKey]map[rune]ren
 				draw.DrawMask(img, dr, image.NewUniform(cmd.Text.Foreground), image.Point{}, mask, maskp, draw.Over)
 			}
 			m[ch] = renderedGlyph{img: img, advance: advance, x: dr.Min.X, y: dr.Min.Y}
+			for i := 0; i < len(img.Pix); i += 4 {
+				c := color.RGBA{img.Pix[i], img.Pix[i+1], img.Pix[i+2], img.Pix[i+3]}
+				c2 := color.NRGBAModel.Convert(c).(color.NRGBA)
+				a := uint32(float64(c2.A) * 1.5)
+				if a > 0xff {
+					a = 0xff
+				}
+				c2.A = uint8(a)
+				c = color.RGBAModel.Convert(c2).(color.RGBA)
+				img.Pix[i], img.Pix[i+1], img.Pix[i+2], img.Pix[i+3] = c.R, c.G, c.B, c.A
+			}
 		}
 	}
 	for k := range *allm {
