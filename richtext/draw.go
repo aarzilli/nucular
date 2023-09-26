@@ -113,6 +113,25 @@ func (rtxt *RichText) drawRows(w *nucular.Window, viewporth int) *Ctor {
 			}
 		}
 		if out == nil {
+			if rtxt.Sel.S != rtxt.Sel.E && insel != selAfter {
+				for i, chunk := range line.chunks {
+					chunkrng := Sel{line.off[i], line.off[i] + chunk.len()}
+					switch insel {
+					case selBefore:
+						if chunkrng.contains(rtxt.Sel.S) {
+							if chunkrng.contains(rtxt.Sel.E) {
+								insel = selAfter
+							} else {
+								insel = selInside
+							}
+						}
+					case selInside:
+						if chunkrng.contains(rtxt.Sel.E) || chunkrng.S >= rtxt.Sel.E {
+							insel = selAfter
+						}
+					}
+				}
+			}
 			continue
 		}
 		if debugDrawBoundingBoxes {
