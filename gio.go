@@ -577,7 +577,9 @@ func (ctx *context) Draw(ops *op.Ops, size image.Point, perf bool, perfString st
 			stack1.Pop()
 
 		case command.TextCmd:
+			stack := gioclip.Rect(icmd.Rect.Rectangle()).Push(ops)
 			drawText(ops, charAtlas, icmd.Text.Face, icmd.Text.Foreground, icmd.Rect, icmd.Text.String)
+			stack.Pop()
 
 		default:
 			panic(UnknownCommandErr)
