@@ -24,7 +24,7 @@ type MasterWindow interface {
 	Close()
 	Closed() bool
 	OnClose(func())
-	ActivateEditor(ed *TextEditor)
+	ActivateEditor(*Window, interface{})
 
 	Style() *nstyle.Style
 	SetStyle(*nstyle.Style)
@@ -47,7 +47,7 @@ func NewMasterWindow(flags WindowFlags, title string, updatefn UpdateFn) MasterW
 	return NewMasterWindowSize(flags, title, image.Point{640, 480}, updatefn)
 }
 
-type WindowWalkFn func(title string, data interface{}, docked bool, splitSize int, rect rect.Rect)
+type WindowWalkFn func(w *Window, title string, data interface{}, docked bool, splitSize int, rect rect.Rect)
 
 type masterWindowCommon struct {
 	ctx *context
@@ -92,12 +92,17 @@ func (mw *masterWindowCommon) Input() *Input {
 	return &mw.ctx.Input
 }
 
-func (mw *masterWindowCommon) ActivateEditor(ed *TextEditor) {
-	mw.ctx.activateEditor = ed
+func (mw *masterWindowCommon) ActivateEditor(win *Window, ed interface{}) {
+	mw.ctx.Input.activateEditor = ed
+	mw.ctx.Input.activateEditorWindow = win
+	mw.Changed()
 }
 
-func (mw *masterWindowCommon) ActivatingEditor() *TextEditor {
-	return mw.ctx.activateEditor
+func (mw *masterWindowCommon) ActivatingEditor() interface{} {
+	if mw.ctx.Input.activateEditorWindow == nil {
+		return mw.ctx.Input.activateEditor
+	}
+	return nil
 }
 
 func (mw *masterWindowCommon) Style() *nstyle.Style {

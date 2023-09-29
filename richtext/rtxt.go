@@ -459,9 +459,14 @@ func (rtxt *RichText) initialize(w *nucular.Window, changed *bool) {
 		rtxt.Sel.E = 0
 	}
 	if mw, _ := w.Master().(activateEditor); mw != nil && mw.ActivatingEditor() != nil {
-		rtxt.focused = false
-		rtxt.Sel.S = 0
-		rtxt.Sel.E = 0
+		if mw.ActivatingEditor() == rtxt {
+			rtxt.focused = true
+			rtxt.Group.grab(rtxt, w)
+		} else {
+			rtxt.focused = false
+			rtxt.Sel.S = 0
+			rtxt.Sel.E = 0
+		}
 	}
 
 	rtxt.arrowKey, rtxt.pageKey = 0, 0

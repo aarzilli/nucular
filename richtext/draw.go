@@ -48,7 +48,7 @@ func (rtxt *RichText) drawWidget(w *nucular.Window) *Ctor {
 }
 
 type activateEditor interface {
-	ActivatingEditor() *nucular.TextEditor
+	ActivatingEditor() interface{}
 }
 
 func (rtxt *RichText) drawRows(w *nucular.Window, viewporth int) *Ctor {
