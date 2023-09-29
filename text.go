@@ -1409,6 +1409,7 @@ func (d *drawableTextEditor) Draw(z *nstyle.Style, out *command.Buffer) {
 	state := d.State
 	style := d.Style
 	bounds := d.Bounds
+	out.Cursor(d.Area, font.TextCursor)
 	font := z.Font
 	area := d.Area
 	row_height := d.RowHeight

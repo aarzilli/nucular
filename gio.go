@@ -581,12 +581,26 @@ func (ctx *context) Draw(ops *op.Ops, size image.Point, perf bool, perfString st
 			drawText(ops, charAtlas, icmd.Text.Face, icmd.Text.Foreground, icmd.Rect, icmd.Text.String)
 			stack.Pop()
 
+		case command.CursorCmd:
+			stack := gioclip.Rect(icmd.Rect.Rectangle()).Push(ops)
+			c := font2pointerCursor[icmd.Cursor]
+			c.Add(ops)
+			stack.Pop()
+
 		default:
 			panic(UnknownCommandErr)
 		}
 	}
 
 	return len(ctx.cmds)
+}
+
+var font2pointerCursor = map[font.Cursor]pointer.Cursor{
+	font.DefaultCursor:  pointer.CursorDefault,
+	font.NoCursor:       pointer.CursorNone,
+	font.TextCursor:     pointer.CursorText,
+	font.PointerCursor:  pointer.CursorPointer,
+	font.ProgressCursor: pointer.CursorProgress,
 }
 
 func drawText(ops *op.Ops, charAtlas map[charAtlasKey]map[rune]renderedGlyph, fontFace font.Face, foreground color.RGBA, rect rect.Rect, str string) {

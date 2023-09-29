@@ -130,9 +130,9 @@ func updatefn(w *nucular.Window) {
 		switch selected {
 		case 0:
 			c.Align(richtext.Align(align))
-			c.SetStyle(richtext.TextStyle{Face: header})
+			c.SetStyle(richtext.TextStyle{Face: header, Cursor: font.TextCursor})
 			c.Text("Vispa Teresa\n")
-			c.SetStyle(richtext.TextStyle{Face: proportional})
+			c.SetStyle(richtext.TextStyle{Face: proportional, Cursor: font.TextCursor})
 			c.Text("\n")
 			c.Text("La vispa Teresa\navea tra l'erbetta\na volo sorpresa\ngentil farfalletta\n\n")
 			c.Text("E tutta giuliva\nstringendola viva\ngridava a distesa\nl'ho presa! l'ho presa!\n\n")

@@ -148,8 +148,9 @@ func (chunk chunk) str() string {
 }
 
 type TextStyle struct {
-	Face  font.Face
-	Flags FaceFlags
+	Face   font.Face
+	Cursor font.Cursor
+	Flags  FaceFlags
 
 	Color, SelFgColor, BgColor color.RGBA // foreground color, selected foreground color, background color
 

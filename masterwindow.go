@@ -192,12 +192,7 @@ func (w *masterWindowCommon) drawChanged() bool {
 		pcmd := &w.prevCmds[i]
 
 		switch cmds[i].Kind {
-		case command.ScissorCmd:
-			if *pcmd != *cmd {
-				return true
-			}
-
-		case command.LineCmd:
+		case command.ScissorCmd, command.LineCmd, command.TriangleFilledCmd, command.CircleFilledCmd, command.ImageCmd, command.TextCmd, command.CursorCmd:
 			if *pcmd != *cmd {
 				return true
 			}
@@ -206,26 +201,6 @@ func (w *masterWindowCommon) drawChanged() bool {
 			if i == 0 {
 				cmd.RectFilled.Color.A = 0xff
 			}
-			if *pcmd != *cmd {
-				return true
-			}
-
-		case command.TriangleFilledCmd:
-			if *pcmd != *cmd {
-				return true
-			}
-
-		case command.CircleFilledCmd:
-			if *pcmd != *cmd {
-				return true
-			}
-
-		case command.ImageCmd:
-			if *pcmd != *cmd {
-				return true
-			}
-
-		case command.TextCmd:
 			if *pcmd != *cmd {
 				return true
 			}
