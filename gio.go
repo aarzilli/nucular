@@ -156,7 +156,8 @@ func (mw *masterWindow) main() {
 					if changed < 2 {
 						atomic.StoreInt32(&mw.ctx.changed, 2)
 					}
-					if e.State == key.Press {
+					// apparently gio only produces a release event for the tab key? bug?
+					if e.State == key.Press || (e.Name == key.NameTab) {
 						mw.uilock.Lock()
 						switch e.Name {
 						case key.NameEnter, key.NameReturn:

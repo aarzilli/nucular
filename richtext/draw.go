@@ -56,8 +56,6 @@ func (rtxt *RichText) drawRows(w *nucular.Window, viewporth int) *Ctor {
 		viewporth = w.Bounds.H - w.At().Y
 	}
 
-	rtxt.Events = 0
-
 	rtxt.first = false
 	// this small row is necessary so that LayoutAvailableWidth will give us
 	// the correct available width for our shit.
