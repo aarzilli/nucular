@@ -199,6 +199,15 @@ func (w *Window) Master() MasterWindow {
 	return w.ctx.mw
 }
 
+func (win *Window) Title() string {
+	return win.title
+}
+
+// SetTitle cannot be used to change the title of the Root window, only sub-windows.
+func (win *Window) SetTitle(s string) {
+	win.title = s
+}
+
 func (win *Window) style() *nstyle.Window {
 	switch {
 	case win.flags&windowCombo != 0:
