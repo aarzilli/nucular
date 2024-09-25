@@ -50,10 +50,6 @@ type ColorTable struct {
 	ColorWindow                color.RGBA
 	ColorHeader                color.RGBA
 	ColorHeaderFocused         color.RGBA
-	ColorHeaderHover           color.RGBA
-	ColorHeaderText            color.RGBA
-	ColorHeaderTextFocused     color.RGBA
-	ColorHeaderTextHover       color.RGBA
 	ColorBorder                color.RGBA
 	ColorButton                color.RGBA
 	ColorButtonHover           color.RGBA
@@ -372,41 +368,7 @@ type Window struct {
 	MinSize         image.Point
 }
 
-var defaultThemeTable = ColorTable{
-	ColorText:                  color.RGBA{175, 175, 175, 255},
-	ColorWindow:                color.RGBA{45, 45, 45, 255},
-	ColorHeader:                color.RGBA{40, 40, 40, 255},
-	ColorHeaderFocused:         color.RGBA{40, 40, 40, 255},
-	ColorHeaderHover:           color.RGBA{40, 40, 40, 255},
-	ColorHeaderText:            color.RGBA{175, 175, 175, 255},
-	ColorHeaderTextFocused:     color.RGBA{175, 175, 175, 255},
-	ColorHeaderTextHover:       color.RGBA{175, 175, 175, 255},
-	ColorBorder:                color.RGBA{65, 65, 65, 255},
-	ColorButton:                color.RGBA{50, 50, 50, 255},
-	ColorButtonHover:           color.RGBA{40, 40, 40, 255},
-	ColorButtonActive:          color.RGBA{35, 35, 35, 255},
-	ColorToggle:                color.RGBA{100, 100, 100, 255},
-	ColorToggleHover:           color.RGBA{120, 120, 120, 255},
-	ColorToggleCursor:          color.RGBA{45, 45, 45, 255},
-	ColorSelect:                color.RGBA{45, 45, 45, 255},
-	ColorSelectActive:          color.RGBA{35, 35, 35, 255},
-	ColorSlider:                color.RGBA{38, 38, 38, 255},
-	ColorSliderCursor:          color.RGBA{100, 100, 100, 255},
-	ColorSliderCursorHover:     color.RGBA{120, 120, 120, 255},
-	ColorSliderCursorActive:    color.RGBA{150, 150, 150, 255},
-	ColorProperty:              color.RGBA{38, 38, 38, 255},
-	ColorEdit:                  color.RGBA{38, 38, 38, 255},
-	ColorEditCursor:            color.RGBA{175, 175, 175, 255},
-	ColorCombo:                 color.RGBA{45, 45, 45, 255},
-	ColorChart:                 color.RGBA{120, 120, 120, 255},
-	ColorChartColor:            color.RGBA{45, 45, 45, 255},
-	ColorChartColorHighlight:   color.RGBA{255, 0, 0, 255},
-	ColorScrollbar:             color.RGBA{40, 40, 40, 255},
-	ColorScrollbarCursor:       color.RGBA{100, 100, 100, 255},
-	ColorScrollbarCursorHover:  color.RGBA{120, 120, 120, 255},
-	ColorScrollbarCursorActive: color.RGBA{150, 150, 150, 255},
-	ColorTabHeader:             color.RGBA{40, 40, 40, 255},
-}
+var defaultThemeTable = ColorTable{color.RGBA{175, 175, 175, 255}, color.RGBA{45, 45, 45, 255}, color.RGBA{40, 40, 40, 255}, color.RGBA{40, 40, 40, 255}, color.RGBA{65, 65, 65, 255}, color.RGBA{50, 50, 50, 255}, color.RGBA{40, 40, 40, 255}, color.RGBA{35, 35, 35, 255}, color.RGBA{100, 100, 100, 255}, color.RGBA{120, 120, 120, 255}, color.RGBA{45, 45, 45, 255}, color.RGBA{45, 45, 45, 255}, color.RGBA{35, 35, 35, 255}, color.RGBA{38, 38, 38, 255}, color.RGBA{100, 100, 100, 255}, color.RGBA{120, 120, 120, 255}, color.RGBA{150, 150, 150, 255}, color.RGBA{38, 38, 38, 255}, color.RGBA{38, 38, 38, 255}, color.RGBA{175, 175, 175, 255}, color.RGBA{45, 45, 45, 255}, color.RGBA{120, 120, 120, 255}, color.RGBA{45, 45, 45, 255}, color.RGBA{255, 0, 0, 255}, color.RGBA{40, 40, 40, 255}, color.RGBA{100, 100, 100, 255}, color.RGBA{120, 120, 120, 255}, color.RGBA{150, 150, 150, 255}, color.RGBA{40, 40, 40, 255}}
 
 func FromTable(table ColorTable, scaling float64) *Style {
 	var text *Text
@@ -840,11 +802,11 @@ func FromTable(table ColorTable, scaling float64) *Style {
 	win.Header.MinimizeSymbol = label.SymbolMinus
 	win.Header.MaximizeSymbol = label.SymbolPlus
 	win.Header.Normal = MakeItemColor(table.ColorHeader)
-	win.Header.Hover = MakeItemColor(table.ColorHeaderHover)
+	win.Header.Hover = MakeItemColor(table.ColorHeader)
 	win.Header.Active = MakeItemColor(table.ColorHeaderFocused)
-	win.Header.LabelNormal = table.ColorHeaderText
-	win.Header.LabelHover = table.ColorHeaderTextHover
-	win.Header.LabelActive = table.ColorHeaderTextFocused
+	win.Header.LabelNormal = table.ColorText
+	win.Header.LabelHover = table.ColorText
+	win.Header.LabelActive = table.ColorText
 	win.Header.LabelPadding = image.Point{2, 2}
 	win.Header.Padding = image.Point{2, 2}
 	win.Header.Spacing = image.Point{0, 0}
@@ -968,10 +930,6 @@ var whiteThemeTable = ColorTable{
 	ColorWindow:                color.RGBA{175, 175, 175, 255},
 	ColorHeader:                color.RGBA{175, 175, 175, 255},
 	ColorHeaderFocused:         color.RGBA{0xc3, 0x9a, 0x9a, 255},
-	ColorHeaderHover:           color.RGBA{0xc3, 0x9a, 0x9a, 255},
-	ColorHeaderText:            color.RGBA{70, 70, 70, 255},
-	ColorHeaderTextFocused:     color.RGBA{0, 0, 0, 255},
-	ColorHeaderTextHover:       color.RGBA{0, 0, 0, 255},
 	ColorBorder:                color.RGBA{0, 0, 0, 255},
 	ColorButton:                color.RGBA{185, 185, 185, 255},
 	ColorButtonHover:           color.RGBA{170, 170, 170, 255},
@@ -1004,10 +962,6 @@ var redThemeTable = ColorTable{
 	ColorWindow:                color.RGBA{35, 39, 47, 255},
 	ColorHeader:                color.RGBA{181, 45, 69, 220},
 	ColorHeaderFocused:         color.RGBA{0xb5, 0x0c, 0x2c, 0xdc},
-	ColorHeaderHover:           color.RGBA{0xb5, 0x0c, 0x2c, 0xdc},
-	ColorHeaderText:            color.RGBA{190, 190, 190, 255},
-	ColorHeaderTextFocused:     color.RGBA{51, 55, 67, 255},
-	ColorHeaderTextHover:       color.RGBA{51, 55, 67, 255},
 	ColorBorder:                color.RGBA{51, 55, 67, 255},
 	ColorButton:                color.RGBA{181, 45, 69, 255},
 	ColorButtonHover:           color.RGBA{190, 50, 70, 255},
@@ -1040,10 +994,6 @@ var darkThemeTable = ColorTable{
 	ColorWindow:                color.RGBA{57, 67, 71, 255},
 	ColorHeader:                color.RGBA{51, 51, 56, 220},
 	ColorHeaderFocused:         color.RGBA{0x29, 0x29, 0x37, 0xdc},
-	ColorHeaderHover:           color.RGBA{0x29, 0x29, 0x37, 0xdc},
-	ColorHeaderText:            color.RGBA{210, 210, 210, 255},
-	ColorHeaderTextFocused:     color.RGBA{46, 46, 46, 255},
-	ColorHeaderTextHover:       color.RGBA{46, 46, 46, 255},
 	ColorBorder:                color.RGBA{46, 46, 46, 255},
 	ColorButton:                color.RGBA{48, 83, 111, 255},
 	ColorButtonHover:           color.RGBA{58, 93, 121, 255},
