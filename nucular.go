@@ -203,8 +203,11 @@ func (win *Window) Title() string {
 	return win.title
 }
 
-// SetTitle cannot be used to change the title of the Root window, only sub-windows.
+// SetTitle cannot be used to change the title of the Root window, only sub-windows and the gio backend.
 func (win *Window) SetTitle(s string) {
+	if win.idx == 0 && win.title != s {
+		win.ctx.mw.setTitle(s)
+	}
 	win.title = s
 }
 

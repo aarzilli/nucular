@@ -915,3 +915,7 @@ func updateCharAtlas(cmds []command.Command, allm *map[charAtlasKey]map[rune]ren
 		}
 	}
 }
+
+func (mw *masterWindow) setTitle(title string) {
+	mw.w.Option(app.Title(title))
+}

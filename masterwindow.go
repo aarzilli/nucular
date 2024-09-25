@@ -41,6 +41,8 @@ type MasterWindow interface {
 
 	Lock()
 	Unlock()
+
+	setTitle(string)
 }
 
 func NewMasterWindow(flags WindowFlags, title string, updatefn UpdateFn) MasterWindow {
