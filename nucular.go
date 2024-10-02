@@ -203,6 +203,16 @@ func (win *Window) Title() string {
 	return win.title
 }
 
+// RootFocused returns true if the MasterWindow root is in focus
+func (win *Window) RootFocused() bool {
+	return win.ctx.rootWindowFocus
+}
+
+// RootFocused requests the MasterWindow root to be focused.
+func (win *Window) FocusRoot() {
+	win.ctx.rootWindowFocus = true
+}
+
 // SetTitle cannot be used to change the title of the Root window, only sub-windows and the gio backend.
 func (win *Window) SetTitle(s string) {
 	if win.idx == 0 && win.title != s {
