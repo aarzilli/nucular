@@ -36,6 +36,7 @@ type context struct {
 
 	dockedWindowFocus int
 	floatWindowFocus  int
+	rootWindowFocus   bool
 	scrollwheelFocus  int
 	dockedCnt         int
 
@@ -237,6 +238,7 @@ func (ctx *context) Restack() {
 		return
 	}
 	ctx.dockedWindowFocus = 0
+	ctx.rootWindowFocus = false
 	nonmodalToplevel := false
 	var toplevelIdx int
 	for i := len(ctx.Windows) - 1; i >= 0; i-- {
@@ -285,14 +287,19 @@ func (ctx *context) Restack() {
 		}
 		return w
 	})
+	if ctx.dockedWindowFocus == 0 {
+		ctx.rootWindowFocus = true
+	}
 }
 
 func (ctx *context) FindFocus() {
 	ctx.floatWindowFocus = 0
-	for i := len(ctx.Windows) - 1; i >= 0; i-- {
-		if ctx.Windows[i].flags&windowTooltip == 0 {
-			ctx.floatWindowFocus = i
-			break
+	if !ctx.rootWindowFocus {
+		for i := len(ctx.Windows) - 1; i >= 0; i-- {
+			if ctx.Windows[i].flags&windowTooltip == 0 {
+				ctx.floatWindowFocus = i
+				break
+			}
 		}
 	}
 	ctx.scrollwheelFocus = 0
