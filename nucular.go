@@ -2719,6 +2719,7 @@ func (ctx *context) popupOpen(title string, flags WindowFlags, rect rect.Rect, s
 	}
 	ctx.Windows = append(ctx.Windows, popup)
 	ctx.dockedWindowFocus = 0
+	ctx.rootWindowFocus = false
 
 	if scale {
 		rect.X = ctx.scale(rect.X)
