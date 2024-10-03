@@ -2765,8 +2765,8 @@ func (ctx *context) autoPosition() (int, int) {
 func (win *Window) Close() {
 	if win.idx != 0 {
 		win.close = true
-	} else if win.ctx.rootWindowFocus || win.parent == nil {
-		// If we hit w.Close() while we are in Root context, close the Root window.
+	} else {
+		// win.idx == 0: Should be in Master window's context.
 		win.Master().Close()
 	}
 }
