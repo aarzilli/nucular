@@ -1150,8 +1150,8 @@ var arabicLigatureMarkTable = [...]arabicTableEntry{
 var arabicLigature3Table = [...]arabicTableEntry{
 	{0xfedf, []arabicLig{
 		{[]rune{0xfee0, 0xfeea}, 0xf201},
-		{[]rune{0xfee4, 0xfea4}, 0xfd88},
 		{[]rune{0xfee4, 0xfea0}, 0xf211},
+		{[]rune{0xfee4, 0xfea4}, 0xfd88},
 	}},
 }
 
