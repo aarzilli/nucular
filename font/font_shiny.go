@@ -1,7 +1,7 @@
 package font
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"sync"
 
 	"golang.org/x/image/font"
@@ -15,11 +15,11 @@ type Face struct {
 }
 
 var fontsMu sync.Mutex
-var fontsMap = map[[md5.Size]byte]*truetype.Font{}
+var fontsMap = map[[sha256.Size]byte]*truetype.Font{}
 
 // NewFace returns a new face by parsing the ttf font.
 func NewFace(ttf []byte, size int) (Face, error) {
-	key := md5.Sum(ttf)
+	key := sha256.Sum256(ttf)
 	fontsMu.Lock()
 	defer fontsMu.Unlock()
 
