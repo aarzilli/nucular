@@ -16,8 +16,10 @@ import (
 	"golang.org/x/mobile/event/mouse"
 )
 
-const perfUpdate = false
-const dumpFrame = false
+const (
+	perfUpdate = false
+	dumpFrame  = false
+)
 
 var UnknownCommandErr = errors.New("unknown command")
 
@@ -170,9 +172,11 @@ func contextBegin(ctx *context, layout *panel) {
 	})
 
 	ctx.trashFrame = false
-	ctx.Windows[0].layout = layout
-	panelBegin(ctx, ctx.Windows[0], "")
-	layout.Offset = &ctx.Windows[0].Scrollbar
+	if len(ctx.Windows) > 0 {
+		ctx.Windows[0].layout = layout
+		panelBegin(ctx, ctx.Windows[0], "")
+		layout.Offset = &ctx.Windows[0].Scrollbar
+	}
 }
 
 func contextEnd(ctx *context) {
