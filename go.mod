@@ -6,7 +6,7 @@ require (
 	github.com/golang/freetype v0.0.0-20161208064710-d9be45aaf745
 	github.com/hashicorp/golang-lru v0.5.1
 	golang.org/x/exp/shiny v0.0.0-20240707233637-46b078467d37
-	golang.org/x/image v0.38.0
+	golang.org/x/image v0.41.0
 	golang.org/x/mobile v0.0.0-20231127183840-76ac6878050a
 )
 
@@ -18,7 +18,7 @@ require (
 	github.com/jezek/xgb v1.1.1 // indirect
 	golang.org/x/exp v0.0.0-20240707233637-46b078467d37 // indirect
 	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 )
 
 go 1.25.0
