@@ -1,4 +1,4 @@
-// +build !windows,!linux,!darwin,!freebsd android
+// +build !windows,!linux,!freebsd android
 
 package clipboard
 
