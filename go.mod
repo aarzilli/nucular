@@ -16,10 +16,9 @@ require (
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20231223183121-56fa3ac82ce7 // indirect
 	github.com/go-text/typesetting v0.3.4 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
-	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
-	golang.org/x/net v0.48.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 )
 
 go 1.25.0
