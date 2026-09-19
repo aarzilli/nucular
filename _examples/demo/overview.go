@@ -18,8 +18,6 @@ import (
 	"golang.org/x/mobile/event/mouse"
 )
 
-// 肉棒
-
 type OptionEnum int
 
 const (
