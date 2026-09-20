@@ -202,14 +202,13 @@ func (mw *masterWindow) main() {
 						case key.NameEnter, key.NameReturn:
 							io.WriteString(&mw.textbuffer, "\n")
 						}
-						mw.ctx.Input.Keyboard.Keys = append(mw.ctx.Input.Keyboard.Keys, gio2mobileKey(e))
+						mw.ctx.Input.Keyboard.events = append(mw.ctx.Input.Keyboard.events, KeyboardEvent{kind: keyboardEventKey, key: gio2mobileKey(e)})
 						mw.uilock.Unlock()
 					}
 				case transfer.DataEvent:
 					buf, err := io.ReadAll(e.Open())
 					if err == nil {
-						mw.ctx.Input.HasClipboard = true
-						mw.ctx.Input.Clipboard = string(buf)
+						mw.ctx.Input.Keyboard.addClipboard(string(buf))
 					}
 				}
 			}
@@ -391,7 +390,7 @@ func (mw *masterWindow) updateLocked(perfString string, source input.Source) {
 	mw.ctx.Windows[0].Bounds = rect.Rect{X: 0, Y: 0, W: mw.size.X, H: mw.size.Y}
 	in := &mw.ctx.Input
 	in.Mouse.clip = nk_null_rect
-	in.Keyboard.Text = mw.textbuffer.String()
+	in.Keyboard.addText(mw.textbuffer.String())
 	mw.textbuffer.Reset()
 
 	var t0, t1, te time.Time

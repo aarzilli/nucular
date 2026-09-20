@@ -23,12 +23,15 @@ func main() {
 }
 
 func updatefn(w *nucular.Window) {
-	for _, e := range w.Master().Input().Keyboard.Keys {
-		switch e.Code {
-		case key.CodeB:
+	for e := range w.Master().Input().Keyboard.Events() {
+		switch {
+		case e.HandleKey(key.CodeB, 0):
 			beginningOfRow = !beginningOfRow
-		case key.CodeH:
-			if e.Modifiers&key.ModShift != 0 {
+		case e.HandleKey(key.CodeH, key.ModShift):
+			fallthrough
+		case e.HandleKey(key.CodeH, 0):
+			ke := e.Key()
+			if ke.Modifiers&key.ModShift != 0 {
 				forceHorizontalScrollbar--
 			} else {
 				forceHorizontalScrollbar++
@@ -39,13 +42,13 @@ func updatefn(w *nucular.Window) {
 			if forceHorizontalScrollbar > 15 {
 				forceHorizontalScrollbar = 15
 			}
-		case key.CodeV:
+		case e.HandleKey(key.CodeV, 0):
 			forceVerticalScrollbar = !forceVerticalScrollbar
-		case key.CodeM:
+		case e.HandleKey(key.CodeM, 0):
 			forceMenuBar = !forceMenuBar
-		case key.CodeTab:
+		case e.HandleKey(key.CodeTab, 0):
 			alternateView = !alternateView
-		case key.CodeP:
+		case e.HandleKey(key.CodeP, 0):
 			w.Master().PopupOpen("blah", nucular.WindowMovable|nucular.WindowTitle|nucular.WindowClosable|nucular.WindowScalable, rect.Rect{20, 100, 230, 150}, true, func(w *nucular.Window) {
 				if forceHorizontalScrollbar > 0 {
 					w.Row(20).Static(1000)

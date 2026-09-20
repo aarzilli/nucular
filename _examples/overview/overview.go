@@ -205,15 +205,19 @@ func newOverviewDemo() (od *overviewDemo) {
 func keybindings(w *nucular.Window) {
 	mw := w.Master()
 	if in := w.Input(); in != nil {
-		k := in.Keyboard
-		for _, e := range k.Keys {
+		for e := range in.Keyboard.Events() {
 			scaling := mw.Style().Scaling
 			switch {
-			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Code == key.CodeEqualSign):
+			case e.HandleKey(key.CodeEqualSign, key.ModControl):
+				fallthrough
+			case e.HandleKey(key.CodeEqualSign, key.ModControl|key.ModShift):
 				mw.Style().Scale(scaling + 0.1)
-			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Code == key.CodeHyphenMinus):
+
+			case e.HandleKey(key.CodeHyphenMinus, key.ModControl):
+				fallthrough
+			case e.HandleKey(key.CodeHyphenMinus, key.ModControl|key.ModShift):
 				mw.Style().Scale(scaling - 0.1)
-			case (e.Modifiers == key.ModControl) && (e.Code == key.CodeF):
+			case e.HandleKey(key.CodeF, key.ModControl):
 				mw.SetPerf(!mw.GetPerf())
 			}
 		}

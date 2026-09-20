@@ -2607,8 +2607,12 @@ func (win *Window) doProperty(property rect.Rect, name string, text string, filt
 	ed.doEdit(edit, &style.Edit, in, false, false, false)
 	active = ed.Active
 
-	if active && in.Keyboard.Pressed(key.CodeReturnEnter) {
-		active = !active
+	if active {
+		for ev := range in.Keyboard.Events() {
+			if ev.HandleKey(key.CodeReturnEnter, 0) {
+				active = !active
+			}
+		}
 	}
 
 	if old && !active {

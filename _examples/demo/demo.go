@@ -242,15 +242,14 @@ func (pd *panelDebug) Init() {
 }
 
 func (pd *panelDebug) Update(w *nucular.Window) {
-	for _, k := range w.Input().Keyboard.Keys {
-		if k.Rune == 'b' {
+	for e := range w.Input().Keyboard.Events() {
+		switch {
+		case e.HandleKeyRune('b'):
 			pd.showsingleblock = false
 			pd.showblocks = !pd.showblocks
-		}
-		if k.Rune == 'B' {
+		case e.HandleKeyRune('B'):
 			pd.showsingleblock = !pd.showsingleblock
-		}
-		if k.Rune == 't' {
+		case e.HandleKeyRune('t'):
 			pd.showtabs = !pd.showtabs
 		}
 	}
@@ -319,15 +318,15 @@ var listDemoCnt = 0
 func listDemo(w *nucular.Window) {
 	const N = 100
 	recenter := false
-	for _, e := range w.Input().Keyboard.Keys {
-		switch e.Code {
-		case key.CodeDownArrow:
+	for e := range w.Input().Keyboard.Events() {
+		switch {
+		case e.HandleKey(key.CodeDownArrow, 0):
 			listDemoSelected++
 			if listDemoSelected >= N {
 				listDemoSelected = N - 1
 			}
 			recenter = true
-		case key.CodeUpArrow:
+		case e.HandleKey(key.CodeUpArrow, 0):
 			listDemoSelected--
 			if listDemoSelected < -1 {
 				listDemoSelected = -1
@@ -364,15 +363,19 @@ func listDemo(w *nucular.Window) {
 func keybindings(w *nucular.Window) {
 	mw := w.Master()
 	if in := w.Input(); in != nil {
-		k := in.Keyboard
-		for _, e := range k.Keys {
+		for e := range in.Keyboard.Events() {
 			scaling := mw.Style().Scaling
 			switch {
-			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Code == key.CodeEqualSign):
+			case e.HandleKey(key.CodeEqualSign, key.ModControl):
+				fallthrough
+			case e.HandleKey(key.CodeEqualSign, key.ModControl|key.ModShift):
 				mw.Style().Scale(scaling + 0.1)
-			case (e.Modifiers == key.ModControl || e.Modifiers == key.ModControl|key.ModShift) && (e.Code == key.CodeHyphenMinus):
+
+			case e.HandleKey(key.CodeHyphenMinus, key.ModControl):
+				fallthrough
+			case e.HandleKey(key.CodeHyphenMinus, key.ModControl|key.ModShift):
 				mw.Style().Scale(scaling - 0.1)
-			case (e.Modifiers == key.ModControl) && (e.Code == key.CodeF):
+			case e.HandleKey(key.CodeF, key.ModControl):
 				mw.SetPerf(!mw.GetPerf())
 			}
 		}
