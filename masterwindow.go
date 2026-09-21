@@ -44,6 +44,7 @@ type MasterWindow interface {
 	Unlock()
 
 	setTitle(string)
+	setIcon(image.Image)
 }
 
 func NewMasterWindow(flags WindowFlags, title string, updatefn UpdateFn) MasterWindow {

@@ -875,3 +875,7 @@ func widgetText(o *command.Buffer, b rect.Rect, str string, t *textWidget, a lab
 func (mw *masterWindow) setTitle(title string) {
 	// not implemented
 }
+
+func (mw *masterWindow) setIcon(icon image.Image) {
+	// not implemented
+}

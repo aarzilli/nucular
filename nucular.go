@@ -211,6 +211,12 @@ func (win *Window) SetTitle(s string) {
 	win.title = s
 }
 
+func (win *Window) SetIcon(icon image.Image) {
+	if win.idx == 0 {
+		win.ctx.mw.setIcon(icon)
+	}
+}
+
 func (win *Window) style() *nstyle.Window {
 	switch {
 	case win.flags&windowCombo != 0:

@@ -59,6 +59,10 @@ type masterWindow struct {
 
 	closed bool
 
+	ve app.ViewEvent
+
+	delayedIcon image.Image
+
 	charAtlas map[charAtlasKey]map[rune]renderedGlyph
 }
 
@@ -220,6 +224,12 @@ func (mw *masterWindow) main() {
 
 			e.Frame(&mw.ops)
 
+		case app.ViewEvent:
+			mw.ve = e
+			if mw.delayedIcon != nil {
+				mw.setIcon(mw.delayedIcon)
+				mw.delayedIcon = nil
+			}
 		}
 	}
 }

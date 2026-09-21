@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
+	_ "embed"
 	"fmt"
 	"image"
 	"image/color"
+	"image/png"
 	"io/ioutil"
 	"os"
 	"runtime/pprof"
@@ -25,6 +28,9 @@ const scaling = 1.8
 
 // var theme nucular.Theme = nucular.WhiteTheme
 var theme nstyle.Theme = nstyle.DarkTheme
+
+//go:embed icon.png
+var iconData []byte
 
 func id(fn func(*nucular.Window)) func() func(*nucular.Window) {
 	return func() func(*nucular.Window) {
@@ -102,8 +108,19 @@ func main() {
 
 	switch whichdemo {
 	case "multi", "":
-		Wnd = nucular.NewMasterWindow(0, "Multiwindow Demo", func(w *nucular.Window) {})
-		Wnd.PopupOpen("Multiwindow Demo", nucular.WindowTitle|nucular.WindowBorder|nucular.WindowMovable|nucular.WindowScalable|nucular.WindowNonmodal, rect.Rect{0, 0, 400, 300}, true, multiDemo)
+		first := true
+		Wnd = nucular.NewMasterWindow(0, "Multiwindow Demo", func(w *nucular.Window) {
+			if first {
+				first = false
+				icon, err := png.Decode(bytes.NewReader(iconData))
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "could not decode icon: %v\n", err)
+					return
+				}
+				w.SetIcon(icon)
+			}
+		})
+		Wnd.PopupOpen("Multiwindow Demo", nucular.WindowTitle|nucular.WindowBorder|nucular.WindowMovable|nucular.WindowScalable|nucular.WindowNonmodal, rect.Rect{0, 0, 800, 600}, true, multiDemo)
 	default:
 		for i := range demos {
 			if demos[i].Name == whichdemo {
