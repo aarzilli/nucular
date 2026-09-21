@@ -1,4 +1,4 @@
-//go:build nucular_gio && linux
+//go:build !nucular_shiny && linux
 
 package nucular
 

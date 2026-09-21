@@ -1,4 +1,4 @@
-//go:build ((darwin && !nucular_shiny) || nucular_gio) && !linux && !windows
+//go:build !nucular_shiny && !linux && !windows
 
 package nucular
 

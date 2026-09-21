@@ -1,4 +1,4 @@
-//go:build nucular_gio && windows
+//go:build !nucular_shiny && windows
 
 package nucular
 

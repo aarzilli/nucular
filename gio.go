@@ -1,5 +1,4 @@
-//go:build (darwin && !nucular_shiny) || nucular_gio
-// +build darwin,!nucular_shiny nucular_gio
+//go:build !nucular_shiny
 
 package nucular
 
