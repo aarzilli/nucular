@@ -62,14 +62,14 @@ type masterWindow struct {
 }
 
 // Creates new master window
-func NewMasterWindowSize(flags WindowFlags, title string, sz image.Point, updatefn UpdateFn) MasterWindow {
+func NewMasterWindowOptions(flags WindowFlags, opts NewWindowOptions, updatefn UpdateFn) MasterWindow {
 	ctx := &context{}
 	wnd := &masterWindow{}
 
 	wnd.masterWindowCommonInit(ctx, flags, updatefn, wnd)
 
-	wnd.Title = title
-	wnd.initialSize = sz
+	wnd.Title = opts.Title
+	wnd.initialSize = opts.Size
 
 	clipboardMu.Lock()
 	if !clipboardStarted {

@@ -69,14 +69,15 @@ var clipboardStarted bool = false
 var hasX11Clipboard = false
 var clipboardMu sync.Mutex
 
-func NewMasterWindowSize(flags WindowFlags, title string, sz image.Point, updatefn UpdateFn) MasterWindow {
+func NewMasterWindowOptions(flags WindowFlags, opt NewWindowOptions, updatefn UpdateFn) MasterWindow {
 	ctx := &context{}
 	wnd := &masterWindow{}
 
 	wnd.masterWindowCommonInit(ctx, flags, updatefn, wnd)
 
-	wnd.Title = title
-	wnd.initialSize = sz
+	wnd.Title = opt.Title
+	wnd.initialSize = opt.Size
+	wnd.delayedIcon = opt.Icon
 
 	clipboardMu.Lock()
 	if !clipboardStarted {
