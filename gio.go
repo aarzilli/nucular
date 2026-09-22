@@ -107,7 +107,6 @@ func (mw *masterWindow) Main() {
 			os.Exit(0)
 		}
 	}()
-	go mw.updater()
 	app.Main()
 }
 
@@ -135,6 +134,7 @@ func (mw *masterWindow) OnClose(onClose func()) {
 
 func (mw *masterWindow) main() {
 	perfString := ""
+	first := true
 	for {
 		switch e := mw.w.Event().(type) {
 		case app.DestroyEvent:
@@ -147,6 +147,10 @@ func (mw *masterWindow) main() {
 			return
 
 		case app.FrameEvent:
+			if first {
+				first = false
+				go mw.updater()
+			}
 			mw.size = e.Size
 
 			for {
