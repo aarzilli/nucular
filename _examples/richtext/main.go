@@ -51,12 +51,14 @@ func main() {
 
 var appendTestIndex int
 
+var editBuffer = []byte("text")
+
 func updatefn(w *nucular.Window) {
 	changed := false
 
 	w.MenubarBegin()
 	w.Row(20).Static(150, 100, 150, 150)
-	newselected := w.ComboSimple([]string{"Vispa Teresa", "Big Enchillada", "Fancy Enchillada", "Fibonacci", "Append Test"}, selected, 20)
+	newselected := w.ComboSimple([]string{"Vispa Teresa", "Big Enchillada", "Fancy Enchillada", "Fibonacci", "Append Test", "Edit test"}, selected, 20)
 	w.CheckboxText("Auto wrap", &autowrap)
 	newalign := w.ComboSimple([]string{"Align left (dumb)", "Align left", "Align right", "Align center", "Align justified"}, align, 20)
 	if w.ButtonText("Open popup") {
@@ -123,10 +125,31 @@ func updatefn(w *nucular.Window) {
 		changed = true
 	}
 
+	if selected == 5 {
+		w.Row(30).Static(100, 0)
+		w.Label("Edit:", "LC")
+		rtxt.Flags = richtext.Selectable | richtext.MimicLabel | richtext.ShowTick | richtext.Editable | richtext.Clipboard
+		rtxt.Replace = func(sel richtext.Sel, s *string) bool {
+			start := string(editBuffer[:sel.S])
+			end := string(editBuffer[sel.E:])
+			editBuffer = append(editBuffer[:0], []byte(start)...)
+			editBuffer = append(editBuffer, []byte(*s)...)
+			editBuffer = append(editBuffer, []byte(end)...)
+			return true
+		}
+		if c := rtxt.Widget(w, changed); c != nil {
+			c.SetStyle(richtext.TextStyle{Face: w.Master().Style().Font, Cursor: font.TextCursor})
+			c.Text(string(editBuffer))
+			c.End()
+		}
+		return
+	}
+
 	rtxt.Flags = defaultFlags
 	if autowrap {
 		rtxt.Flags |= richtext.AutoWrap
 	}
+	rtxt.Replace = nil
 
 	if c := rtxt.Rows(w, changed); c != nil {
 		switch selected {
