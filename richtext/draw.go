@@ -297,11 +297,18 @@ func (rtxt *RichText) drawRows(w *nucular.Window, viewporth int) *Ctor {
 		rtxt.down = false
 	}
 
-	if len(rtxt.lines) == 0 {
-		// empty widget, place the caret at the top left corner
-		rtxt.sendIMESelection(w, image.Point{w.Bounds.X, w.Bounds.Y}, nucular.FontHeight(rtxt.face))
+	if len(rtxt.lines) == 0 && rtxt.flags&ShowTick != 0 {
+		h := nucular.FontHeight(rtxt.face)
+		w.RowScaled(h).Dynamic(1)
+		bounds, out := w.Custom(nstyle.WidgetStateActive)
+		p := image.Point{bounds.X, bounds.Y}
+		if out != nil {
+			rtxt.drawTick(w, out, p, h, siter.styleSel.Color, 0)
+		}
+		if rtxt.flags&Editable != 0 && rtxt.focused {
+			rtxt.sendIMESelection(w, p, h)
+		}
 	}
-	// if the cursor wasn't visible there is nothing to send
 	rtxt.ime.updateSel = false
 
 	if rtxt.flags&Editable != 0 && rtxt.focused && (rtxt.Sel != selAtStart || !focusedAtStart) {
