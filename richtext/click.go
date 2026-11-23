@@ -366,12 +366,14 @@ func (rtxt *RichText) handleKeyboard(w *nucular.Window, in *nucular.Input, chang
 		}
 	}
 	if rtxt.flags&Editable != 0 {
+		edited := false
 		for e := range in.Keyboard.Events() {
 			switch {
 			case e.HandleText():
 				rtxt.replace(e.Text(), changed)
 				rtxt.updateIMESnippet(rtxt.Sel)
 				rtxt.ime.updateSel = true
+				edited = true
 			case rtxt.flags&Clipboard != 0 && e.HandleClipboard():
 				rtxt.replace(e.Text(), changed)
 				rtxt.updateIMESnippet(rtxt.Sel)
@@ -483,8 +485,10 @@ func (rtxt *RichText) handleKeyboard(w *nucular.Window, in *nucular.Input, chang
 				rtxt.ime.updateSnippet = false
 
 			case e.HandleSelection():
-				rtxt.Sel = rtxt.runeSelToSel(e.Range())
-				rtxt.clampSel()
+				if !edited {
+					rtxt.Sel = rtxt.runeSelToSel(e.Range())
+					rtxt.clampSel()
+				}
 			}
 		}
 	}
@@ -575,7 +579,6 @@ func (rtxt *RichText) replace(str string, changed *bool) {
 	rtxt.undoEdit = &undoEdit{Sel{rtxt.Sel.S, rtxt.Sel.S + int32(len(str))}, rtxt.Get(rtxt.Sel)}
 	rtxt.Sel.S = rtxt.Sel.S + int32(len(str))
 	rtxt.Sel.E = rtxt.Sel.S
-	rtxt.clampSel()
 }
 
 func (rtxt *RichText) undo(changed *bool) {
