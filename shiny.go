@@ -655,7 +655,7 @@ func (ctx *context) Draw(wimg *image.RGBA) int {
 
 		case command.IMESnippet:
 			// not supported by shiny
-		case command > IMESelection:
+		case command.IMESelection:
 			// not supported by shiny
 
 		default:
